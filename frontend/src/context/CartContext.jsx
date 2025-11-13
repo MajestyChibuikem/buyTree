@@ -55,8 +55,8 @@ export function CartProvider({ children }) {
   }, []);
 
   useEffect(() => {
-    // Calculate total item count
-    const count = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+    // Calculate unique item count (number of different products, not total quantity)
+    const count = cartItems.length;
     setItemCount(count);
 
     // Save to localStorage whenever cart changes
@@ -236,8 +236,21 @@ export function CartProvider({ children }) {
 
   const clearCart = async () => {
     try {
+      // Clear all pending update timers
+      Object.keys(updateTimers.current).forEach(productId => {
+        clearTimeout(updateTimers.current[productId]);
+      });
+      updateTimers.current = {};
+      pendingUpdates.current = {};
+
       await cartService.clearCart();
       setCartItems([]);
+      setCart(null);
+
+      // Explicitly clear localStorage
+      localStorage.removeItem(CART_STORAGE_KEY);
+      localStorage.removeItem(CART_TIMESTAMP_KEY);
+
       return { success: true };
     } catch (error) {
       console.error('Failed to clear cart:', error);

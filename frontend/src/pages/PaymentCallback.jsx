@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { orderService } from '../services/api';
+import { useCart } from '../context/CartContext';
 
 export default function PaymentCallback() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { clearCart, refreshCart } = useCart();
   const [status, setStatus] = useState('verifying'); // verifying, success, failed
   const [orderData, setOrderData] = useState(null);
 
@@ -24,6 +26,12 @@ export default function PaymentCallback() {
           setStatus('success');
           setOrderData(response.data);
 
+          // Clear the cart after successful payment
+          await clearCart();
+
+          // Also refresh cart to sync with server
+          await refreshCart();
+
           // Redirect to orders page after 3 seconds
           setTimeout(() => {
             navigate('/orders');
@@ -38,7 +46,7 @@ export default function PaymentCallback() {
     };
 
     verifyPayment();
-  }, [searchParams, navigate]);
+  }, [searchParams, navigate, clearCart, refreshCart]);
 
   if (status === 'verifying') {
     return (

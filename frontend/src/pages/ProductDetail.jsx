@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { productService, sellerService } from '../services/api';
+import { productService, sellerService, reviewService } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import ReviewList from '../components/reviews/ReviewList';
+import ReviewForm from '../components/reviews/ReviewForm';
 
 export default function ProductDetail() {
   const { shopSlug, productSlug } = useParams();
@@ -18,10 +19,19 @@ export default function ProductDetail() {
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [userPurchasedOrder, setUserPurchasedOrder] = useState(null);
 
   useEffect(() => {
     fetchProductData();
   }, [productSlug, shopSlug]);
+
+  useEffect(() => {
+    // Check if user has purchased this product
+    if (user && product) {
+      checkUserPurchase();
+    }
+  }, [user, product]);
 
   const fetchProductData = async () => {
     setLoading(true);
@@ -48,6 +58,30 @@ export default function ProductDetail() {
       setError(err.response?.data?.message || 'Failed to load product');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const checkUserPurchase = async () => {
+    try {
+      const response = await reviewService.getReviewableProducts();
+      const reviewableProducts = response.data.products || [];
+
+      // Find if this product is in the reviewable list
+      const purchasedProduct = reviewableProducts.find(
+        p => p.product_id === product.id
+      );
+
+      if (purchasedProduct) {
+        setUserPurchasedOrder({
+          orderId: purchasedProduct.order_id,
+          orderNumber: purchasedProduct.order_number,
+        });
+      } else {
+        setUserPurchasedOrder(null);
+      }
+    } catch (error) {
+      console.error('Failed to check user purchase:', error);
+      setUserPurchasedOrder(null);
     }
   };
 
@@ -376,7 +410,41 @@ export default function ProductDetail() {
         </div>
 
         {/* Reviews Section */}
-        <div className="mt-8">
+        <div className="mt-8 space-y-6">
+          {/* Write Review Button - Only show if user has purchased this product */}
+          {user && userPurchasedOrder && !showReviewForm && (
+            <div className="bg-white rounded-lg shadow p-6">
+              <button
+                onClick={() => setShowReviewForm(true)}
+                className="w-full sm:w-auto px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center justify-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                Write a Review
+              </button>
+              <p className="mt-2 text-sm text-gray-600">
+                You purchased this product in order #{userPurchasedOrder.orderNumber}
+              </p>
+            </div>
+          )}
+
+          {/* Review Form */}
+          {showReviewForm && userPurchasedOrder && (
+            <ReviewForm
+              productId={product.id}
+              orderId={userPurchasedOrder.orderId}
+              productName={product.name}
+              onReviewSubmitted={() => {
+                setShowReviewForm(false);
+                setUserPurchasedOrder(null); // Clear so button doesn't show again
+                // The ReviewList will automatically refresh
+              }}
+              onCancel={() => setShowReviewForm(false)}
+            />
+          )}
+
+          {/* Reviews List */}
           <ReviewList productId={product.id} />
         </div>
       </div>

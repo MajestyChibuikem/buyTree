@@ -22,7 +22,7 @@ const createReview = async (req, res) => {
       });
     }
 
-    // Check if order exists and belongs to buyer
+    // Verify the purchase
     const orderCheck = await db.query(
       `SELECT o.id, o.buyer_id, oi.product_id
        FROM orders o
@@ -38,7 +38,7 @@ const createReview = async (req, res) => {
       });
     }
 
-    // Check if review already exists
+    // Check if review already exists for this order
     const existingReview = await db.query(
       'SELECT id FROM reviews WHERE product_id = $1 AND buyer_id = $2 AND order_id = $3',
       [productId, buyerId, orderId]
@@ -56,7 +56,7 @@ const createReview = async (req, res) => {
       `INSERT INTO reviews (product_id, buyer_id, order_id, rating, title, comment, images)
        VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING *`,
-      [productId, buyerId, orderId, rating, title || null, comment || null, images || null]
+      [productId, buyerId, orderId || null, rating, title || null, comment || null, images || null]
     );
 
     res.status(201).json({
