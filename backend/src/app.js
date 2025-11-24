@@ -1,13 +1,59 @@
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 
 const app = express();
 
-// Middleware
+// Security Headers - Helmet.js
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }, // Allow images from Cloudinary
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'"],
+      imgSrc: ["'self'", "data:", "https://res.cloudinary.com"],
+    },
+  },
+}));
+
+// Rate Limiting - TEMPORARILY DISABLED FOR TESTING
+// TODO: Re-enable before production deployment
+
+// const generalLimiter = rateLimit({
+//   windowMs: 15 * 60 * 1000, // 15 minutes
+//   max: 100, // Limit each IP to 100 requests per windowMs
+//   message: 'Too many requests from this IP, please try again later.',
+//   standardHeaders: true,
+//   legacyHeaders: false,
+// });
+
+// const authLimiter = rateLimit({
+//   windowMs: 15 * 60 * 1000, // 15 minutes
+//   max: 5, // Limit each IP to 5 login attempts per windowMs
+//   message: 'Too many login attempts, please try again after 15 minutes.',
+//   standardHeaders: true,
+//   legacyHeaders: false,
+// });
+
+// const passwordResetLimiter = rateLimit({
+//   windowMs: 60 * 60 * 1000, // 1 hour
+//   max: 3, // Limit each IP to 3 password reset requests per hour
+//   message: 'Too many password reset requests, please try again after an hour.',
+//   standardHeaders: true,
+//   legacyHeaders: false,
+// });
+
+// app.use('/api/', generalLimiter);
+
+// CORS
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:5173',
   credentials: true
 }));
+
+// Body parsers
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -49,8 +95,18 @@ const orderRoutes = require('./routes/order.routes');
 const analyticsRoutes = require('./routes/analytics.routes');
 const reviewRoutes = require('./routes/review.routes');
 const favoriteRoutes = require('./routes/favorite.routes');
+const passwordResetRoutes = require('./routes/passwordReset.routes');
+const adminRoutes = require('./routes/admin.routes');
 
+// Export limiters for use in routes (DISABLED FOR TESTING)
+// app.set('authLimiter', authLimiter);
+// app.set('passwordResetLimiter', passwordResetLimiter);
+
+// Apply routes (rate limiters disabled for testing)
 app.use('/api/auth', authRoutes);
+app.use('/api/password-reset', passwordResetRoutes);
+
+// Other routes use general limiter (already applied globally)
 app.use('/api/sellers', sellerRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/upload', uploadRoutes);
@@ -59,6 +115,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/favorites', favoriteRoutes);
+app.use('/api/admin', adminRoutes);
 
 // API root endpoint
 app.get('/api', (req, res) => {

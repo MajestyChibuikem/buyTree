@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { orderService } from '../services/api';
-import OrderStatusWorkflow from '../components/orders/OrderStatusWorkflow';
+import OrderDetailModal from '../components/orders/OrderDetailModal';
+import { openWhatsAppChat } from '../utils/whatsapp';
 
 const SellerOrderManagement = () => {
   const navigate = useNavigate();
@@ -118,10 +119,10 @@ const SellerOrderManagement = () => {
     });
   };
 
-  // Open WhatsApp
+  // Open WhatsApp using utility function
   const openWhatsApp = (phone, orderNumber) => {
-    const message = encodeURIComponent(`Hello! Regarding order ${orderNumber}`);
-    window.open(`https://wa.me/${phone.replace(/\D/g, '')}?text=${message}`, '_blank');
+    const message = `Hello! Regarding order ${orderNumber}`;
+    openWhatsAppChat(phone, message);
   };
 
   // Status tabs
@@ -476,43 +477,21 @@ const SellerOrderManagement = () => {
         )}
       </div>
 
-      {/* Detail Modal - Placeholder (will create separate component next) */}
+      {/* Detail Modal with Status Update */}
       {showDetailModal && selectedOrder && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">Order Details</h2>
-                <button
-                  onClick={() => setShowDetailModal(false)}
-                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                >
-                  <svg className="w-6 h-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-
-              {/* Order Status Workflow */}
-              <OrderStatusWorkflow
-                currentStatus={selectedOrder.status}
-                statusHistory={[]}
-                className="mb-6"
-              />
-
-              {/* Placeholder for update status form - will build next */}
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
-                <p className="text-gray-600">Update status functionality will be added in the detail modal component</p>
-                <button
-                  onClick={() => setShowDetailModal(false)}
-                  className="mt-4 px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <OrderDetailModal
+          order={selectedOrder}
+          onClose={() => setShowDetailModal(false)}
+          onStatusUpdated={() => {
+            fetchSummary();
+            fetchOrders(selectedStatus, pagination.page, searchQuery);
+            setShowDetailModal(false);
+          }}
+          formatCurrency={formatCurrency}
+          formatDate={formatDate}
+          getStatusBadge={getStatusBadge}
+          openWhatsApp={openWhatsApp}
+        />
       )}
     </div>
   );

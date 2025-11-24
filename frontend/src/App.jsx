@@ -2,9 +2,12 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
-import Home from './pages/Home';
+import Landing from './pages/Landing';
+// import StoreBrowsing from './pages/StoreBrowsing'; // V2 Feature - Marketplace browsing
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import BecomeSeller from './pages/BecomeSeller';
 import SellerDashboard from './pages/SellerDashboard';
 import SellerAnalytics from './pages/SellerAnalytics';
@@ -29,6 +32,8 @@ function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           {/* Shop pages - public */}
           <Route path="/shop/:shopSlug" element={<Shop />} />
           <Route path="/shop/:shopSlug/product/:productSlug" element={<ProductDetail />} />
@@ -85,19 +90,15 @@ function App() {
               </ProtectedRoute>
             }
           />
-          {/* Old product catalog - keeping for now */}
-          <Route path="/products" element={<Products />} />
-          <Route path="/products/:id" element={<ProductDetail />} />
-          {/* Search */}
-          <Route path="/search" element={<SearchResults />} />
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <Home />
-              </ProtectedRoute>
-            }
-          />
+          {/* V2 Features - Commented out for v1 (store-centric focus) */}
+          {/* <Route path="/products" element={<Products />} /> */}
+          {/* <Route path="/products/:id" element={<ProductDetail />} /> */}
+          {/* <Route path="/search" element={<SearchResults />} /> */}
+          {/* <Route path="/browse" element={<ProtectedRoute><StoreBrowsing /></ProtectedRoute>} /> */}
+
+          {/* Landing page - public, seller-focused */}
+          <Route path="/" element={<Landing />} />
+
           <Route
             path="/become-seller"
             element={

@@ -189,14 +189,19 @@ export default function Shop() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
+      {/* Header - Store-centric navigation */}
       <nav className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <button onClick={() => navigate('/')} className="text-2xl font-bold text-green-600">
+            <div className="flex items-center gap-4">
+              {/* BuyTree Logo - Links to landing page */}
+              <button onClick={() => navigate('/')} className="text-2xl font-bold text-green-600 hover:text-green-700 transition-colors">
                 BuyTree
               </button>
+              {/* Powered by badge for sellers to see */}
+              <span className="hidden md:inline text-xs text-gray-500 px-2 py-1 bg-gray-100 rounded-full">
+                Powered Store
+              </span>
             </div>
             <div className="flex items-center space-x-2 sm:space-x-4">
               {/* Cart Icon - Always visible for logged in users */}
@@ -204,6 +209,7 @@ export default function Shop() {
                 <button
                   onClick={() => navigate('/cart')}
                   className="relative p-2 hover:bg-gray-100 rounded-full transition-colors"
+                  title="My Cart"
                 >
                   <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -223,13 +229,21 @@ export default function Shop() {
                     <button
                       onClick={() => navigate('/seller/dashboard')}
                       className="px-4 py-2 text-green-600 hover:bg-green-50 rounded-lg hidden sm:block"
+                      title="My Dashboard"
                     >
                       Dashboard
                     </button>
                   )}
                   <button
-                    onClick={logout}
+                    onClick={() => navigate('/orders')}
                     className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg hidden sm:block"
+                    title="My Orders"
+                  >
+                    Orders
+                  </button>
+                  <button
+                    onClick={logout}
+                    className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg text-sm"
                   >
                     Logout
                   </button>

@@ -16,7 +16,11 @@ const CATEGORIES = [
   'Art & Crafts',
 ];
 
-export default function Home() {
+// V2 FEATURE - Marketplace Store Browsing
+// This component allows users to browse all stores on the platform
+// Hidden in v1 to focus on individual seller storefronts
+
+export default function StoreBrowsing() {
   const { user, logout } = useAuth();
   const { itemCount } = useCart();
   const navigate = useNavigate();

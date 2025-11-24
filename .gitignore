@@ -19,3 +19,6 @@ SETUP_TROUBLESHOOTING.md
 START_HERE.md
 TESTING_GUIDE.md
 test-products.sh
+SEED_ORDERS_README.md
+seed-dummy-data.js
+seed-order-data.js
