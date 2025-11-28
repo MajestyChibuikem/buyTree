@@ -30,7 +30,7 @@ export default function SellerDashboard() {
   // Load products and seller profile on mount
   useEffect(() => {
     if (user?.role !== 'seller') {
-      navigate('/');
+      navigate('/login');
       return;
     }
     fetchSellerData();
@@ -215,10 +215,10 @@ export default function SellerDashboard() {
                 Manage Orders
               </button>
               <button
-                onClick={() => navigate('/')}
+                onClick={() => navigate(-1)}
                 className="text-gray-600 hover:text-gray-900 px-3 py-2"
               >
-                Home
+                Back
               </button>
               <button
                 onClick={() => {

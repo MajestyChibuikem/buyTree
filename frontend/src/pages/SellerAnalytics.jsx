@@ -14,7 +14,7 @@ export default function SellerAnalytics() {
 
   useEffect(() => {
     if (user?.role !== 'seller') {
-      navigate('/');
+      navigate('/login');
       return;
     }
     fetchAnalytics();

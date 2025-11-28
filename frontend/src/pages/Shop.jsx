@@ -177,10 +177,10 @@ export default function Shop() {
           <div className="text-red-600 text-xl mb-4">Shop not found</div>
           <p className="text-gray-600 mb-6">{error}</p>
           <button
-            onClick={() => navigate('/')}
+            onClick={() => navigate(-1)}
             className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
           >
-            Go Home
+            Go Back
           </button>
         </div>
       </div>

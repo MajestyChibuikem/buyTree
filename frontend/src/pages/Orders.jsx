@@ -69,7 +69,7 @@ export default function Orders() {
           <div className="flex justify-between h-16">
             <div className="flex items-center gap-2">
               <button
-                onClick={() => navigate('/')}
+                onClick={() => navigate(-1)}
                 className="p-2 hover:bg-gray-100 rounded-full"
               >
                 <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -97,10 +97,10 @@ export default function Orders() {
             <h3 className="mt-4 text-xl font-semibold text-gray-900">No orders yet</h3>
             <p className="mt-2 text-gray-600">Start shopping to see your orders here!</p>
             <button
-              onClick={() => navigate('/')}
+              onClick={() => navigate(-1)}
               className="mt-6 px-6 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition-colors"
             >
-              Start Shopping
+              Go Back
             </button>
           </div>
         ) : (

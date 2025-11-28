@@ -198,9 +198,9 @@ export default function SearchResults() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center gap-4 flex-1">
-              <button onClick={() => navigate('/')} className="text-2xl font-bold text-green-600 whitespace-nowrap">
+              <div className="text-2xl font-bold text-green-600 whitespace-nowrap">
                 BuyTree
-              </button>
+              </div>
 
               {/* Search Bar */}
               <form onSubmit={handleSearch} className="flex-1 max-w-2xl">

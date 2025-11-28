@@ -205,9 +205,9 @@ export default function ProductDetail() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
-              <button onClick={() => navigate('/')} className="text-xl sm:text-2xl font-bold text-green-600">
+              <div className="text-xl sm:text-2xl font-bold text-green-600">
                 BuyTree
-              </button>
+              </div>
             </div>
             <div className="flex items-center space-x-2 sm:space-x-4">
               {/* Cart Icon */}

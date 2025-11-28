@@ -45,12 +45,9 @@ export default function ForgotPassword() {
       <div className="max-w-md w-full">
         {/* Logo/Header */}
         <div className="text-center mb-8">
-          <button
-            onClick={() => navigate('/')}
-            className="text-3xl font-bold text-green-600 hover:text-green-700 transition-colors"
-          >
+          <div className="text-3xl font-bold text-green-600">
             BuyTree
-          </button>
+          </div>
           <p className="text-gray-600 mt-2">Reset your password</p>
         </div>
 

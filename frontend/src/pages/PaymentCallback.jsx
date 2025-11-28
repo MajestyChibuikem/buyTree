@@ -151,10 +151,10 @@ export default function PaymentCallback() {
               Return to Cart
             </button>
             <button
-              onClick={() => navigate('/')}
+              onClick={() => navigate('/orders')}
               className="w-full px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
             >
-              Go to Home
+              View Orders
             </button>
           </div>
         </div>

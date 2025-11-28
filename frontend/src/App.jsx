@@ -1,5 +1,5 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import Landing from './pages/Landing';
@@ -24,6 +24,24 @@ import OrderDetail from './pages/OrderDetail';
 import SellerOrders from './pages/SellerOrders';
 import SellerOrderManagement from './pages/SellerOrderManagement';
 import Favorites from './pages/Favorites';
+
+// Smart fallback component that redirects based on auth status
+function SmartFallback() {
+  const { user } = useAuth();
+  const location = useLocation();
+
+  // If user is logged in, redirect based on role
+  if (user) {
+    if (user.role === 'seller') {
+      return <Navigate to="/seller/dashboard" replace />;
+    } else {
+      return <Navigate to="/orders" replace />;
+    }
+  }
+
+  // If not logged in, redirect to Coming Soon page
+  return <Navigate to="/" replace />;
+}
 
 function App() {
   return (
@@ -143,7 +161,7 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<SmartFallback />} />
         </Routes>
         </CartProvider>
       </AuthProvider>

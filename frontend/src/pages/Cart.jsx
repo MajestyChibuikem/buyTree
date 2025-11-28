@@ -89,7 +89,7 @@ export default function Cart() {
           <div className="flex justify-between h-16">
             <div className="flex items-center gap-2">
               <button
-                onClick={() => navigate('/')}
+                onClick={() => navigate(-1)}
                 className="p-2 hover:bg-gray-100 rounded-full"
               >
                 <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -127,10 +127,10 @@ export default function Cart() {
             <h3 className="mt-4 text-xl font-semibold text-gray-900">Your cart is empty</h3>
             <p className="mt-2 text-gray-600">Add some products to get started!</p>
             <button
-              onClick={() => navigate('/')}
+              onClick={() => navigate(-1)}
               className="mt-6 px-6 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition-colors"
             >
-              Continue Shopping
+              Go Back
             </button>
           </div>
         ) : (
@@ -325,10 +325,10 @@ export default function Cart() {
                 </p>
 
                 <button
-                  onClick={() => navigate('/')}
+                  onClick={() => navigate(-1)}
                   className="w-full mt-3 px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-colors"
                 >
-                  Continue Shopping
+                  Go Back
                 </button>
               </div>
             </div>

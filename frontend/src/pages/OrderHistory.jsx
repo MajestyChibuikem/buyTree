@@ -159,10 +159,10 @@ const OrderHistory = () => {
             </p>
             {selectedStatus === 'all' && (
               <button
-                onClick={() => navigate('/')}
+                onClick={() => navigate(-1)}
                 className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors"
               >
-                Start Shopping
+                Go Back
               </button>
             )}
           </div>
@@ -283,10 +283,10 @@ const OrderHistory = () => {
         {orders.length > 0 && (
           <div className="mt-8 text-center">
             <button
-              onClick={() => navigate('/')}
+              onClick={() => navigate(-1)}
               className="text-green-600 hover:text-green-700 font-medium"
             >
-              ← Continue Shopping
+              ← Go Back
             </button>
           </div>
         )}
