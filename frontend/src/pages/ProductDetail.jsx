@@ -111,13 +111,7 @@ export default function ProductDetail() {
   };
 
   const handleBuyNow = async () => {
-    if (!user) {
-      // For guest users, redirect to login with cart redirect
-      navigate(`/login?redirect=/checkout`);
-      return;
-    }
-
-    // Prepare product data for guest cart
+    // Prepare product data for cart
     const productData = {
       product_name: product.name,
       price: product.price,
@@ -126,14 +120,23 @@ export default function ProductDetail() {
       shop_slug: shopSlug,
     };
 
-    // Add item to cart first
+    // Add to cart first (works for both guest and authenticated users)
     const result = await addToCartContext(product.id, quantity, productData);
-    if (result.success) {
-      // Navigate to checkout page
-      navigate('/checkout');
-    } else {
+
+    if (!result.success) {
       alert(result.error || 'Failed to add to cart');
+      return;
     }
+
+    // If user is not authenticated, redirect to login with the current page as redirect
+    if (!user) {
+      const currentPath = `/shop/${shopSlug}/product/${productSlug}`;
+      navigate(`/login?redirect=${encodeURIComponent(currentPath)}`);
+      return;
+    }
+
+    // If authenticated, go to checkout
+    navigate('/checkout');
   };
 
   const handleShare = (platform) => {

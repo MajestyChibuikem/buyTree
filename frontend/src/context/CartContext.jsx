@@ -22,6 +22,7 @@ export function CartProvider({ children }) {
   const pendingUpdates = useRef({});
   const updateTimers = useRef({});
   const periodicSyncTimer = useRef(null);
+  const hasTransferredCart = useRef(false); // Track if we've already transferred cart
 
   // LocalStorage keys
   const CART_STORAGE_KEY = 'buytree_cart_items';
@@ -95,6 +96,39 @@ export function CartProvider({ children }) {
       }
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
+  }, []);
+
+  // Watch for authentication changes and transfer guest cart
+  useEffect(() => {
+    const checkAuthAndTransferCart = async () => {
+      const token = localStorage.getItem('token');
+      const guestCart = loadGuestCart();
+
+      // If user just logged in and has a guest cart that hasn't been transferred yet
+      if (token && guestCart.length > 0 && !hasTransferredCart.current) {
+        hasTransferredCart.current = true;
+        setIsGuest(false);
+        await transferGuestCartToUser();
+      } else if (token && guestCart.length === 0) {
+        // User logged in but no guest cart
+        setIsGuest(false);
+        if (hasTransferredCart.current) {
+          // Cart was just transferred, refresh from server
+          await fetchCart();
+          hasTransferredCart.current = false;
+        }
+      } else if (!token) {
+        // User logged out
+        setIsGuest(true);
+        hasTransferredCart.current = false;
+      }
+    };
+
+    // Check periodically for auth changes (handles login from other components)
+    checkAuthAndTransferCart();
+    const authCheckInterval = setInterval(checkAuthAndTransferCart, 1000);
+
+    return () => clearInterval(authCheckInterval);
   }, []);
 
   useEffect(() => {
