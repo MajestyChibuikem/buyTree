@@ -3,6 +3,7 @@ import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import Landing from './pages/Landing';
+import ComingSoon from './pages/ComingSoon';
 // import StoreBrowsing from './pages/StoreBrowsing'; // V2 Feature - Marketplace browsing
 import Login from './pages/Login';
 import Signup from './pages/Signup';
@@ -96,8 +97,11 @@ function App() {
           {/* <Route path="/search" element={<SearchResults />} /> */}
           {/* <Route path="/browse" element={<ProtectedRoute><StoreBrowsing /></ProtectedRoute>} /> */}
 
-          {/* Landing page - public, seller-focused */}
-          <Route path="/" element={<Landing />} />
+          {/* Coming soon placeholder for main page */}
+          <Route path="/" element={<ComingSoon />} />
+
+          {/* Seller landing page - hidden route */}
+          <Route path="/buy-tree/become-a-seller" element={<Landing />} />
 
           <Route
             path="/become-seller"

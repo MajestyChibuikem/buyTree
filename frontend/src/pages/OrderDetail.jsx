@@ -10,6 +10,10 @@ export default function OrderDetail() {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+  const [rating, setRating] = useState(5);
+  const [feedback, setFeedback] = useState('');
 
   useEffect(() => {
     fetchOrderDetails();
@@ -54,6 +58,26 @@ export default function OrderDetail() {
       cancelled: 'bg-red-100 text-red-800 border-red-200',
     };
     return colors[status] || 'bg-gray-100 text-gray-800 border-gray-200';
+  };
+
+  const handleConfirmDelivery = async () => {
+    try {
+      setConfirming(true);
+      const feedbackData = {
+        rating,
+        feedback: feedback.trim(),
+      };
+      await orderService.confirmDelivery(orderId, feedbackData);
+      setShowConfirmModal(false);
+      // Refresh order details to show updated status
+      await fetchOrderDetails();
+      alert('Delivery confirmed successfully! Thank you for your feedback.');
+    } catch (error) {
+      console.error('Failed to confirm delivery:', error);
+      alert(error.response?.data?.message || 'Failed to confirm delivery. Please try again.');
+    } finally {
+      setConfirming(false);
+    }
   };
 
   const getStatusSteps = () => {
@@ -358,6 +382,21 @@ export default function OrderDetail() {
               </div>
 
               <div className="mt-6 space-y-3">
+                {order.status === 'delivered' && !order.delivery_confirmed_at && (
+                  <button
+                    onClick={() => setShowConfirmModal(true)}
+                    className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                  >
+                    Confirm Delivery
+                  </button>
+                )}
+                {order.delivery_confirmed_at && (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                    <p className="text-sm text-green-800 font-medium text-center">
+                      ✓ Delivery Confirmed
+                    </p>
+                  </div>
+                )}
                 <button
                   onClick={() => navigate(`/shop/${order.shop_slug}`)}
                   className="w-full px-4 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors"
@@ -375,6 +414,71 @@ export default function OrderDetail() {
           </div>
         </div>
       </div>
+
+      {/* Confirm Delivery Modal */}
+      {showConfirmModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <h3 className="text-xl font-bold text-gray-900 mb-4">Confirm Delivery</h3>
+
+            <p className="text-gray-600 mb-6">
+              Have you received your order? Please confirm delivery and rate your experience.
+            </p>
+
+            {/* Rating */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Rate your experience (1-5 stars)
+              </label>
+              <div className="flex gap-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    onClick={() => setRating(star)}
+                    className={`text-3xl ${
+                      star <= rating ? 'text-yellow-400' : 'text-gray-300'
+                    } hover:text-yellow-400 transition-colors`}
+                  >
+                    ★
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Feedback */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Feedback (optional)
+              </label>
+              <textarea
+                value={feedback}
+                onChange={(e) => setFeedback(e.target.value)}
+                placeholder="Share your thoughts about this order..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                rows="3"
+              />
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowConfirmModal(false)}
+                disabled={confirming}
+                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmDelivery}
+                disabled={confirming}
+                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors disabled:opacity-50"
+              >
+                {confirming ? 'Confirming...' : 'Confirm Delivery'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
