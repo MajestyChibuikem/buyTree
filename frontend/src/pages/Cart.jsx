@@ -259,17 +259,26 @@ export default function Cart() {
                       </div>
                     )}
 
-                    <button
-                      onClick={() => handleCheckoutStore(sellerId)}
-                      disabled={!storeMeetsMinimum}
-                      className={`w-full py-3 rounded-lg font-semibold transition-colors ${
-                        storeMeetsMinimum
-                          ? 'bg-green-600 text-white hover:bg-green-700'
-                          : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                      }`}
-                    >
-                      {storeMeetsMinimum ? 'Checkout This Store' : `Minimum ₦4,000 Required`}
-                    </button>
+                    {!user ? (
+                      <button
+                        onClick={() => navigate('/login?redirect=/checkout')}
+                        className="w-full py-3 rounded-lg font-semibold transition-colors bg-green-600 text-white hover:bg-green-700"
+                      >
+                        Login to Checkout
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleCheckoutStore(sellerId)}
+                        disabled={!storeMeetsMinimum}
+                        className={`w-full py-3 rounded-lg font-semibold transition-colors ${
+                          storeMeetsMinimum
+                            ? 'bg-green-600 text-white hover:bg-green-700'
+                            : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                        }`}
+                      >
+                        {storeMeetsMinimum ? 'Checkout This Store' : `Minimum ₦4,000 Required`}
+                      </button>
+                    )}
                   </div>
                 </div>
                 );
@@ -312,13 +321,22 @@ export default function Cart() {
                   </div>
                 )}
 
-                <button
-                  onClick={handleCheckoutAll}
-                  disabled={total < minOrderValue}
-                  className="w-full px-6 py-4 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
-                >
-                  Checkout All Stores ({sellerGroups.length})
-                </button>
+                {!user ? (
+                  <button
+                    onClick={() => navigate('/login?redirect=/checkout')}
+                    className="w-full px-6 py-4 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition-colors"
+                  >
+                    Login to Checkout
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleCheckoutAll}
+                    disabled={total < minOrderValue}
+                    className="w-full px-6 py-4 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+                  >
+                    Checkout All Stores ({sellerGroups.length})
+                  </button>
+                )}
 
                 <p className="text-xs text-center text-gray-500 mt-3">
                   Or checkout stores individually above
@@ -344,13 +362,22 @@ export default function Cart() {
               <p className="text-sm text-gray-600">Total ({cartItems.length} items)</p>
               <p className="text-xl font-bold text-gray-900">{formatPrice(total)}</p>
             </div>
-            <button
-              onClick={handleCheckoutAll}
-              disabled={total < minOrderValue}
-              className="px-6 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed text-sm"
-            >
-              Checkout All ({sellerGroups.length})
-            </button>
+            {!user ? (
+              <button
+                onClick={() => navigate('/login?redirect=/checkout')}
+                className="px-6 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition-colors text-sm"
+              >
+                Login to Checkout
+              </button>
+            ) : (
+              <button
+                onClick={handleCheckoutAll}
+                disabled={total < minOrderValue}
+                className="px-6 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed text-sm"
+              >
+                Checkout All ({sellerGroups.length})
+              </button>
+            )}
           </div>
           {total < minOrderValue ? (
             <p className="text-xs text-orange-600 text-center">

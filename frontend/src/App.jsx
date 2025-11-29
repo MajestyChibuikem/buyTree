@@ -56,15 +56,8 @@ function App() {
           {/* Shop pages - public */}
           <Route path="/shop/:shopSlug" element={<Shop />} />
           <Route path="/shop/:shopSlug/product/:productSlug" element={<ProductDetail />} />
-          {/* Cart - requires auth */}
-          <Route
-            path="/cart"
-            element={
-              <ProtectedRoute>
-                <Cart />
-              </ProtectedRoute>
-            }
-          />
+          {/* Cart - accessible to all users (guests and authenticated) */}
+          <Route path="/cart" element={<Cart />} />
           {/* Checkout - requires auth */}
           <Route
             path="/checkout"
