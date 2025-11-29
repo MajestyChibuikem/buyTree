@@ -1,4 +1,5 @@
 const db = require('../config/database');
+const { logger } = require('../utils/logger');
 
 // Middleware to check if user is admin
 const requireAdmin = async (req, res, next) => {
@@ -19,7 +20,7 @@ const requireAdmin = async (req, res, next) => {
 
     next();
   } catch (error) {
-    console.error('Admin auth error:', error);
+    logger.error('Admin auth error', error, { userId: req.user?.id });
     return res.status(500).json({
       success: false,
       message: 'Failed to verify admin access',
@@ -36,7 +37,7 @@ const logAdminAction = async (adminId, actionType, targetType, targetId, details
       [adminId, actionType, targetType, targetId, JSON.stringify(details)]
     );
   } catch (error) {
-    console.error('Failed to log admin action:', error);
+    logger.error('Failed to log admin action', error, { adminId, actionType, targetType, targetId });
   }
 };
 
@@ -112,7 +113,7 @@ const getDashboardMetrics = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Error fetching dashboard metrics:', error);
+    logger.error('Error fetching dashboard metrics', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch dashboard metrics',
@@ -192,7 +193,7 @@ const getAllSellers = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Error fetching sellers:', error);
+    logger.error('Error fetching sellers', error, { filters: req.query });
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch sellers',
@@ -223,7 +224,7 @@ const approveSeller = async (req, res) => {
       message: 'Seller approved successfully',
     });
   } catch (error) {
-    console.error('Error approving seller:', error);
+    logger.error('Error approving seller', error, { sellerId: req.params.sellerId, adminId: req.user.id });
     return res.status(500).json({
       success: false,
       message: 'Failed to approve seller',
@@ -260,7 +261,7 @@ const suspendSeller = async (req, res) => {
       message: 'Seller suspended successfully',
     });
   } catch (error) {
-    console.error('Error suspending seller:', error);
+    logger.error('Error suspending seller', error, { sellerId: req.params.sellerId, adminId: req.user.id });
     return res.status(500).json({
       success: false,
       message: 'Failed to suspend seller',
@@ -333,7 +334,7 @@ const getAllOrders = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Error fetching orders:', error);
+    logger.error('Error fetching orders', error, { filters: req.query });
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch orders',
@@ -407,7 +408,7 @@ const getRevenueAnalytics = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Error fetching revenue analytics:', error);
+    logger.error('Error fetching revenue analytics', error, { period: req.query.period });
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch revenue analytics',

@@ -24,6 +24,10 @@ import OrderDetail from './pages/OrderDetail';
 import SellerOrders from './pages/SellerOrders';
 import SellerOrderManagement from './pages/SellerOrderManagement';
 import Favorites from './pages/Favorites';
+import AdminDashboard from './pages/AdminDashboard';
+import AdminSellers from './pages/AdminSellers';
+import AdminOrders from './pages/AdminOrders';
+import AdminAnalytics from './pages/AdminAnalytics';
 
 // Smart fallback component that redirects based on auth status
 function SmartFallback() {
@@ -32,7 +36,9 @@ function SmartFallback() {
 
   // If user is logged in, redirect based on role
   if (user) {
-    if (user.role === 'seller') {
+    if (user.role === 'admin') {
+      return <Navigate to="/admin/dashboard" replace />;
+    } else if (user.role === 'seller') {
       return <Navigate to="/seller/dashboard" replace />;
     } else {
       return <Navigate to="/orders" replace />;
@@ -151,6 +157,39 @@ function App() {
             element={
               <ProtectedRoute>
                 <SellerAnalytics />
+              </ProtectedRoute>
+            }
+          />
+          {/* Admin Routes - requires admin role */}
+          <Route
+            path="/admin/dashboard"
+            element={
+              <ProtectedRoute>
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/sellers"
+            element={
+              <ProtectedRoute>
+                <AdminSellers />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/orders"
+            element={
+              <ProtectedRoute>
+                <AdminOrders />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/analytics"
+            element={
+              <ProtectedRoute>
+                <AdminAnalytics />
               </ProtectedRoute>
             }
           />
