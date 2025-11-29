@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const requestLogger = require('./middleware/requestLogger');
+const { logger } = require('./utils/logger');
 
 const app = express();
 
@@ -56,6 +58,9 @@ app.use(cors({
 // Body parsers
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Request logging (should be after body parsers)
+app.use(requestLogger);
 
 // Health check endpoint
 app.get('/api/health', async (req, res) => {
@@ -155,7 +160,13 @@ app.use((req, res) => {
 
 // Error handler
 app.use((err, req, res, next) => {
-  console.error('Error:', err);
+  // Log error using logger
+  logger.error('Unhandled error', err, {
+    method: req.method,
+    url: req.url,
+    statusCode: err.statusCode || 500,
+  });
+
   res.status(err.statusCode || 500).json({
     error: err.message || 'Internal Server Error',
     ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
