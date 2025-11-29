@@ -12,13 +12,25 @@ export default function SellerAnalytics() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  // View analytics state
+  const [viewAnalytics, setViewAnalytics] = useState(null);
+  const [viewPeriod, setViewPeriod] = useState('30');
+  const [viewsLoading, setViewsLoading] = useState(false);
+
   useEffect(() => {
     if (user?.role !== 'seller') {
       navigate('/login');
       return;
     }
     fetchAnalytics();
+    fetchViewAnalytics();
   }, [user, navigate]);
+
+  useEffect(() => {
+    if (user?.role === 'seller') {
+      fetchViewAnalytics();
+    }
+  }, [viewPeriod]);
 
   const fetchAnalytics = async () => {
     try {
@@ -31,6 +43,18 @@ export default function SellerAnalytics() {
       console.error('Analytics error:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchViewAnalytics = async () => {
+    try {
+      setViewsLoading(true);
+      const response = await analyticsService.getProductViewAnalytics(viewPeriod);
+      setViewAnalytics(response.data);
+    } catch (err) {
+      console.error('View analytics error:', err);
+    } finally {
+      setViewsLoading(false);
     }
   };
 
@@ -335,6 +359,108 @@ export default function SellerAnalytics() {
               </svg>
               <p>No revenue data available</p>
               <p className="text-sm mt-1">Start making sales to see your revenue chart</p>
+            </div>
+          )}
+        </div>
+
+        {/* Product Views Analytics */}
+        <div className="bg-white rounded-lg shadow p-6 mb-8">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-semibold text-gray-900">Product Views</h2>
+            <select
+              value={viewPeriod}
+              onChange={(e) => setViewPeriod(e.target.value)}
+              className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-green-500"
+            >
+              <option value="7">Last 7 Days</option>
+              <option value="30">Last 30 Days</option>
+              <option value="90">Last 90 Days</option>
+            </select>
+          </div>
+
+          {viewsLoading ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto"></div>
+              <p className="mt-4 text-gray-600 text-sm">Loading views...</p>
+            </div>
+          ) : viewAnalytics ? (
+            <div className="space-y-6">
+              {/* Views Summary */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="text-center p-4 bg-indigo-50 rounded-lg">
+                  <p className="text-sm text-gray-600 mb-1">Total Views (All Time)</p>
+                  <p className="text-3xl font-bold text-indigo-600">{viewAnalytics.totalViews?.toLocaleString() || 0}</p>
+                </div>
+                <div className="text-center p-4 bg-blue-50 rounded-lg">
+                  <p className="text-sm text-gray-600 mb-1">Views (Last {viewPeriod} Days)</p>
+                  <p className="text-3xl font-bold text-blue-600">{viewAnalytics.periodViews?.toLocaleString() || 0}</p>
+                </div>
+              </div>
+
+              {/* Most Viewed Products */}
+              <div>
+                <h3 className="text-md font-semibold text-gray-900 mb-3">Most Viewed Products</h3>
+                {viewAnalytics.mostViewedProducts && viewAnalytics.mostViewedProducts.length > 0 ? (
+                  <div className="space-y-3">
+                    {viewAnalytics.mostViewedProducts.map((product, index) => (
+                      <div key={product.id} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                        <div className="flex-shrink-0 w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
+                          <span className="text-sm font-bold text-indigo-600">#{index + 1}</span>
+                        </div>
+                        {product.image_urls && product.image_urls.length > 0 ? (
+                          <img
+                            src={product.image_urls[0]}
+                            alt={product.name}
+                            className="w-16 h-16 object-cover rounded"
+                          />
+                        ) : (
+                          <div className="w-16 h-16 bg-gray-200 rounded flex items-center justify-center">
+                            <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                              />
+                            </svg>
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-sm font-medium text-gray-900 truncate">{product.name}</h4>
+                          <p className="text-sm text-gray-500">{formatPrice(parseFloat(product.price))}</p>
+                        </div>
+                        <div className="text-right">
+                          <div className="flex flex-col items-end">
+                            <p className="text-sm font-semibold text-indigo-600">
+                              {parseInt(product.period_views || 0).toLocaleString()} views
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {parseInt(product.total_views || 0).toLocaleString()} total
+                            </p>
+                          </div>
+                          {product.quantity_available !== undefined && (
+                            <p className="text-xs text-gray-500 mt-1">
+                              {product.quantity_available} in stock
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg">
+                    <svg className="mx-auto h-10 w-10 text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    <p className="text-sm">No product views yet</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <p>Unable to load view analytics</p>
             </div>
           )}
         </div>

@@ -253,6 +253,11 @@ export const analyticsService = {
     const response = await api.get('/analytics/seller');
     return response.data;
   },
+
+  getProductViewAnalytics: async (period = '30') => {
+    const response = await api.get(`/analytics/seller/views?period=${period}`);
+    return response.data;
+  },
 };
 
 // Review endpoints

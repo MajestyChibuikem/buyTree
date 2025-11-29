@@ -1,4 +1,5 @@
 const db = require('../config/database');
+const { logger } = require('../utils/logger');
 
 // Get seller analytics
 const getSellerAnalytics = async (req, res) => {
@@ -155,6 +156,98 @@ const getSellerAnalytics = async (req, res) => {
   }
 };
 
+// Get product view analytics for seller
+const getProductViewAnalytics = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { period = '30' } = req.query; // Default 30 days
+
+    // Get seller ID
+    const sellerResult = await db.query(
+      'SELECT id FROM sellers WHERE user_id = $1',
+      [userId]
+    );
+
+    if (sellerResult.rows.length === 0) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not a seller',
+      });
+    }
+
+    const sellerId = sellerResult.rows[0].id;
+
+    // 1. Total views for seller's products (all time)
+    const totalViewsResult = await db.query(`
+      SELECT COALESCE(SUM(pa.views), 0) as total_views
+      FROM product_analytics pa
+      JOIN products p ON pa.product_id = p.id
+      WHERE p.seller_id = $1 AND p.deleted_at IS NULL
+    `, [sellerId]);
+
+    // 2. Views for the selected period
+    const periodViewsResult = await db.query(`
+      SELECT COALESCE(SUM(pa.views), 0) as period_views
+      FROM product_analytics pa
+      JOIN products p ON pa.product_id = p.id
+      WHERE p.seller_id = $1
+        AND p.deleted_at IS NULL
+        AND pa.date >= CURRENT_DATE - INTERVAL '${parseInt(period)} days'
+    `, [sellerId]);
+
+    // 3. Daily views trend for the period
+    const dailyViewsResult = await db.query(`
+      SELECT
+        pa.date,
+        SUM(pa.views) as views
+      FROM product_analytics pa
+      JOIN products p ON pa.product_id = p.id
+      WHERE p.seller_id = $1
+        AND p.deleted_at IS NULL
+        AND pa.date >= CURRENT_DATE - INTERVAL '${parseInt(period)} days'
+      GROUP BY pa.date
+      ORDER BY pa.date DESC
+    `, [sellerId]);
+
+    // 4. Most viewed products (Top 10)
+    const mostViewedResult = await db.query(`
+      SELECT
+        p.id,
+        p.name,
+        p.slug,
+        p.price,
+        p.image_urls,
+        p.quantity_available,
+        COALESCE(SUM(pa.views), 0) as total_views,
+        COALESCE(SUM(CASE WHEN pa.date >= CURRENT_DATE - INTERVAL '${parseInt(period)} days'
+            THEN pa.views ELSE 0 END), 0) as period_views
+      FROM products p
+      LEFT JOIN product_analytics pa ON p.id = pa.product_id
+      WHERE p.seller_id = $1 AND p.deleted_at IS NULL
+      GROUP BY p.id
+      ORDER BY period_views DESC, total_views DESC
+      LIMIT 10
+    `, [sellerId]);
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        totalViews: parseInt(totalViewsResult.rows[0].total_views),
+        periodViews: parseInt(periodViewsResult.rows[0].period_views),
+        dailyViews: dailyViewsResult.rows,
+        mostViewedProducts: mostViewedResult.rows,
+      },
+    });
+  } catch (error) {
+    logger.error('Error fetching product view analytics', error, { userId: req.user.id });
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch product view analytics',
+    });
+  }
+};
+
 module.exports = {
   getSellerAnalytics,
+  getProductViewAnalytics,
 };
