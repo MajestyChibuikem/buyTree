@@ -2,6 +2,10 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { productService, uploadService, sellerService } from '../services/api';
+import { BiAnalyse, BiLogoGraphql, BiLogOut, BiMenu, BiReceipt } from 'react-icons/bi';
+import Arrow from '../assets/icons8-arrow-30.png';
+
+
 
 export default function SellerDashboard() {
   const navigate = useNavigate();
@@ -15,6 +19,9 @@ export default function SellerDashboard() {
   const [editingProduct, setEditingProduct] = useState(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [menu, setMenu] = useState(false)
+  const [mainMenu, setMainMenu] = useState(false)
+
 
   // Form state
   const [formData, setFormData] = useState({
@@ -194,45 +201,88 @@ export default function SellerDashboard() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <nav className="bg-white shadow">
+      <nav className="bg-white bg-opacity-75 shadow-sm shadow-black/25 backdrop-blur-md fixed w-screen z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
               <h1 className="text-2xl font-bold text-green-600">BuyTree Seller</h1>
             </div>
             <div className="flex items-center space-x-4">
-              <span className="text-gray-700 hidden md:inline">Hello, {user?.firstName}!</span>
-              <button
-                onClick={() => navigate('/seller/analytics')}
-                className="text-green-600 hover:bg-green-50 px-4 py-2 rounded-lg font-medium"
-              >
-                Analytics
-              </button>
-              <button
-                onClick={() => navigate('/seller/order-management')}
-                className="text-green-600 hover:bg-green-50 px-4 py-2 rounded-lg font-medium"
-              >
-                Manage Orders
-              </button>
-              <button
-                onClick={() => navigate(-1)}
-                className="text-gray-600 hover:text-gray-900 px-3 py-2"
-              >
-                Back
-              </button>
-              <button
-                onClick={() => {
-                  logout();
-                  navigate('/login');
-                }}
-                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium"
-              >
-                Logout
-              </button>
+              {/* <span className="text-gray-700 hidden md:inline">Hello, {user?.firstName}!</span> */}
+              {
+                  menu ? 
+                      <div>
+                          <p className='flex md:hidden gap-2 items-center px-4 py-2 rounded-lg bg-green-600 text-white' onClick={() => setMenu(!menu)}><BiMenu size='18'/>Menu</p>
+                          <div className="absolute flex md:hidden flex-col items-end mt-1 right-4 sm:right-6 px-2 py-2 rounded-lg bg-green-600 text-white">
+                              <p className='hover:bg-green-700 w-full text-right px-2 py-1' onClick={() => navigate('/seller/analytics')}>Analytics</p>
+                              <p onClick={() => navigate('/seller/order-management')}>Manage Orders</p>
+                              <p onClick={() => { logout(); navigate('/login');}}>Log Out</p>
+                          </div>
+                      </div>
+                  :
+                      <div>
+                          <p className='flex md:hidden gap-2 items-center px-4 py-2 rounded-lg bg-green-600 text-white' onClick={() => setMenu(!menu)}><BiMenu size='18'/>Menu</p>
+                      </div>
+              }
+              <main className='hidden md:flex gap-2'>
+                {
+                  mainMenu ? 
+                  <>
+                    <div className='flex items-center justify-between w-56 pr-3 border-r border-gray-200 border-solid'>
+                      <div className='flex flex-col'>
+                        <p className='font-medium text-lg'>Hello, {user.firstName}!</p>
+                        <p className='text-gray-700 font-light text-sm'>What would you like today?</p>
+
+                      </div>
+                      <div onClick={() => setMainMenu(!mainMenu)} className=' w-5' ><img src={Arrow} /></div>
+                      <div className="absolute top-full mt-3 flex flex-col items-end px-3 py-3 rounded-lg bg-white/95 backdrop-blur-md gap-1 shadow-lg z-50 ml-[30px]">
+                        <button
+                          onClick={() => navigate('/seller/analytics')}
+                          className="flex gap-2 items-center w-full justify-end px-3 py-1 text-gray-700 hover:bg-gray-100 text-lg rounded-md"
+                        >
+                          <BiAnalyse /> Analytics
+                        </button>
+                        <button
+                          onClick={() => navigate('/seller/order-management')}
+                          className="flex gap-2 items-center w-full text-right px-3 py-1 text-gray-700 hover:bg-gray-100 text-lg rounded-md"
+                        >
+                          <BiReceipt />  Manage Orders
+                        </button>
+                    </div>
+                    </div>
+                    
+                  </>
+                  :
+
+                  <>
+                    <div className='flex items-center justify-between w-56 pr-3 border-r border-gray-200 border-solid'>
+                      <div className='flex flex-col'>
+                        <p className='font-medium text-lg'>Hello, {user.firstName}!</p>
+                        <p className='text-gray-700 font-light text-sm'>What would you like today?</p>
+
+                      </div>
+                      <div onClick={() => setMainMenu(!mainMenu)} className='rotate-180 w-5'><img src={Arrow} /></div>
+
+                    </div>
+                  </>
+                }
+        
+                <button
+                  onClick={() => {
+                    logout();
+                    navigate('/login');
+                  }}
+                  className="text-red-600 hover:bg-red-100 text-lg rounded-full py-1 px-2"
+                >
+                  <BiLogOut />
+                </button>
+              </main>
             </div>
           </div>
         </div>
       </nav>
+
+      <div className='w-screen h-16 bg-white'></div>
 
       {/* Shop Link Banner */}
       {shopSlug && (

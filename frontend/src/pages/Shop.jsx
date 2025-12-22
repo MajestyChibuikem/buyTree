@@ -4,6 +4,8 @@ import { productService, sellerService } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { productCache, shopCache } from '../utils/cache';
+import { BiDownArrow, BiLogOut, BiMenu, BiReceipt, BiUpArrow } from 'react-icons/bi';
+import Arrow from '../assets/icons8-arrow-30.png';
 
 const CATEGORIES = [
   'All',
@@ -29,6 +31,9 @@ export default function Shop() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [menu, setMenu] = useState(false)
+  const [mainMenu, setMainMenu] = useState(false)
+
 
   // Filters
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || 'All');
@@ -190,7 +195,7 @@ export default function Shop() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header - Store-centric navigation */}
-      <nav className="bg-white shadow">
+      <nav className="bg-white bg-opacity-75 nav-shadow backdrop-blur-md fixed w-screen z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center gap-4">
@@ -205,52 +210,112 @@ export default function Shop() {
             </div>
             <div className="flex items-center space-x-2 sm:space-x-4">
               {/* Cart Icon - Visible for all users (guests and authenticated) */}
-              <button
-                onClick={() => navigate('/cart')}
-                className="relative p-2 hover:bg-gray-100 rounded-full transition-colors"
-                title="My Cart"
-              >
-                <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-                {itemCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-green-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                    {itemCount > 99 ? '99+' : itemCount}
-                  </span>
-                )}
-              </button>
+              
 
               {user ? (
                 <>
-                  <span className="text-gray-700 hidden sm:inline">Hello, {user.firstName}!</span>
-                  {user.role === 'seller' && (
+                  {/* <span className="text-gray-700 hidden sm:inline">Hello, {user.firstName}!</span> */}
+                  
+                  {/* {user.role === 'seller' && (
                     <button
                       onClick={() => navigate('/seller/dashboard')}
                       className="px-4 py-2 text-green-600 hover:bg-green-50 rounded-lg hidden sm:block"
                       title="My Dashboard"
                     >
-                      Dashboard
+                      Home
                     </button>
-                  )}
+                  )} */}
+                  <main className='hidden md:flex gap-2'>
+                  {
+                    mainMenu ? 
+                    <>
+                      <div className='flex items-center justify-between w-56 pr-3 border-r border-gray-200 border-solid'>
+                        <div className='flex flex-col'>
+                          <p className='font-medium text-lg'>Hello, {user.firstName}!</p>
+                          <p className='text-gray-700 font-light text-sm'>What would you like today?</p>
+
+                        </div>
+                        <div onClick={() => setMainMenu(!mainMenu)} className=' w-5' ><img src={Arrow} /></div>
+                        <div className="absolute top-full mt-3 flex flex-col items-end px-3 py-3 rounded-lg bg-white/95 backdrop-blur-md gap-1 shadow-lg z-50 ml-[85px]">
+                          <button
+                            onClick={() => navigate('/orders')}
+                            className="flex gap-2 items-center w-full text-right px-4 py-1 text-gray-700 hover:bg-gray-100 text-lg rounded-md"
+                            title="My Orders"
+                          >
+                            <BiReceipt /> Orders
+                          </button>
+                          <button
+                            onClick={logout}
+                            className="flex gap-2 items-center w-full text-right px-4 py-1 text-red-600 hover:bg-gray-100 text-lg rounded-md"
+                          >
+                            <BiLogOut /> Logout
+                          </button>
+                      </div>
+                      </div>
+                      
+                    </>
+                    :
+
+                    <>
+                      <div className='flex items-center justify-between w-56 pr-3 border-r border-gray-200 border-solid'>
+                        <div className='flex flex-col'>
+                          <p className='font-medium text-lg'>Hello, {user.firstName}!</p>
+                          <p className='text-gray-700 font-light text-sm'>What would you like today?</p>
+
+                        </div>
+                        <div onClick={() => setMainMenu(!mainMenu)} className='rotate-180 w-5'><img src={Arrow} /></div>
+
+                      </div>
+                    </>
+                  }
+                  
+                  </main>
+                  
                   <button
-                    onClick={() => navigate('/orders')}
-                    className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg hidden sm:block"
-                    title="My Orders"
+                    onClick={() => navigate('/cart')}
+                    className="relative p-2 hover:bg-gray-100 rounded-full transition-colors"
+                    title="My Cart"
                   >
-                    Orders
-                  </button>
-                  <button
-                    onClick={logout}
-                    className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg text-sm"
-                  >
-                    Logout
-                  </button>
+                    <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    {itemCount > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-green-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                        {itemCount > 99 ? '99+' : itemCount}
+                      </span>
+                    )}
+                  </button> 
+                  {
+                      menu ? 
+                          <div>
+                              <p className='flex md:hidden gap-2 items-center px-4 py-2 rounded-lg bg-green-600 text-white' onClick={() => setMenu(!menu)}><BiMenu size='18'/>Menu</p>
+                              <div className="absolute flex md:hidden flex-col items-end mt-1 right-4 sm:right-6 px-2 py-2 rounded-lg bg-green-600 text-white">
+                                  <button
+                                    onClick={() => navigate('/orders')}
+                                    className="flex gap-2 items-center w-full text-lg hover:bg-green-700/50 w-full text-right px-2 py-1 rounded-md"
+                                    title="My Orders"
+                                  >
+                                    <BiReceipt /> Orders
+                                  </button>
+                                  <button
+                                    onClick={logout}
+                                    className="flex gap-2 items-center w-full text-right px-2 py-1 hover:bg-green-700/50 text-lg"
+                                  >
+                                    <BiLogOut /> Logout
+                                  </button>
+                              </div>
+                          </div>
+                      :
+                          <div>
+                              <p className='flex md:hidden gap-2 items-center px-4 py-2 rounded-lg bg-green-600 text-white' onClick={() => setMenu(!menu)}><BiMenu size='18'/>Menu</p>
+                          </div>
+                  }
                 </>
               ) : (
                 <>
                   <button
                     onClick={() => navigate('/login')}
-                    className="px-3 py-2 sm:px-4 text-gray-700 hover:bg-gray-100 rounded-lg text-sm sm:text-base"
+                    className="px-3 py-2 sm:px-4 text-green-600 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm sm:text-base"
                   >
                     Login
                   </button>
@@ -266,6 +331,8 @@ export default function Shop() {
           </div>
         </div>
       </nav>
+
+      <div className='w-screen h-16 bg-white'></div>
 
       {/* Shop Header */}
       <div className="bg-white shadow-sm border-b">
