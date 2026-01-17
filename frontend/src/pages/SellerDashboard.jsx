@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { productService, uploadService, sellerService } from '../services/api';
-import { BiAnalyse, BiLogoGraphql, BiLogOut, BiMenu, BiReceipt } from 'react-icons/bi';
+import { BiAnalyse, BiGrid, BiHome, BiLogoGraphql, BiLogOut, BiMenu, BiPieChart, BiReceipt, BiSearch } from 'react-icons/bi';
 import Arrow from '../assets/icons8-arrow-30.png';
 
 
@@ -201,29 +201,50 @@ export default function SellerDashboard() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <nav className="bg-white bg-opacity-75 shadow-sm shadow-black/25 backdrop-blur-md fixed w-screen z-50">
+      <nav className="bg-white bg-opacity-75 shadow-sm shadow-black/25 backdrop-blur-sm fixed w-screen z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
               <h1 className="text-2xl font-bold text-green-600">BuyTree Seller</h1>
             </div>
             <div className="flex items-center space-x-4">
-              {/* <span className="text-gray-700 hidden md:inline">Hello, {user?.firstName}!</span> */}
-              {
-                  menu ? 
-                      <div>
-                          <p className='flex md:hidden gap-2 items-center px-4 py-2 rounded-lg bg-green-600 text-white' onClick={() => setMenu(!menu)}><BiMenu size='18'/>Menu</p>
-                          <div className="absolute flex md:hidden flex-col items-end mt-1 right-4 sm:right-6 px-2 py-2 rounded-lg bg-green-600 text-white">
-                              <p className='hover:bg-green-700 w-full text-right px-2 py-1' onClick={() => navigate('/seller/analytics')}>Analytics</p>
-                              <p onClick={() => navigate('/seller/order-management')}>Manage Orders</p>
-                              <p onClick={() => { logout(); navigate('/login');}}>Log Out</p>
-                          </div>
+              <div>
+                  <p className='flex md:hidden gap-2 items-center p-2 rounded-lg border-green-600 border-2 border-solid text-green-600' onClick={() => setMenu(!menu)}><BiMenu size='20'/></p>
+                  <div className={`
+                      transition-opacity duration-500 ease-in-out
+                      ${menu ? 'opacity-50 pointer-events-auto' : 'opacity-0 pointer-events-none'}
+                      fixed top-0 right-0 h-screen w-screen bg-black
+                    `}
+
+                    onClick={() => setMenu(!menu)}>
+                  </div>
+                  <div className={`
+                        fixed top-0 right-0 h-screen w-[70%]
+                        md:hidden flex flex-col items-end justify-between
+                        p-3 bg-white
+                        transition-transform duration-500 ease-in-out
+                        ${menu ? 'translate-x-0' : 'translate-x-full'}
+                      `}>
+                      <div className='w-full flex flex-col gap-2'>
+                        <div className='flex flex-col items-end pb-3'>
+                          <p className='font-medium text-2xl'>Hello, {user.firstName}!</p>
+                          <p className='text-gray-700 font-light text-base'>What would you like today?</p>
+                        </div>
+                        <div className='w-full'>
+                        <p className='bg-green-100 rounded-lg text-green-600 w-full text-right px-3 py-2 
+                        flex justify-end items-center gap-[5px]'> <BiHome /> <span>Home</span></p>
+                        <p className='text-gray-800 rounded-lg mt-2 w-full text-right px-3 py-2 
+                        flex justify-end items-center gap-[5px]' onClick={() => navigate('/seller/analytics')}><BiLogoGraphql /><span>Analytics</span> </p>
+                        <p className='text-gray-800 rounded-lg mt-2 w-full text-right px-3 py-2 
+                        flex justify-end items-center gap-[5px]' onClick={() => navigate('/seller/order-management')}> <BiReceipt /> <span>Manage Orders</span> </p>
+                        </div>
                       </div>
-                  :
-                      <div>
-                          <p className='flex md:hidden gap-2 items-center px-4 py-2 rounded-lg bg-green-600 text-white' onClick={() => setMenu(!menu)}><BiMenu size='18'/>Menu</p>
-                      </div>
-              }
+                      <p className='text-gray-800 rounded-lg mt-2 w-full text-right px-3 py-2 
+                       flex justify-end items-center gap-[5px]' onClick={() => { logout(); navigate('/login');}}><BiLogOut/> <span>Log Out</span></p>
+                  </div>
+              </div>
+          
+              
               <main className='hidden md:flex gap-2'>
                 {
                   mainMenu ? 
