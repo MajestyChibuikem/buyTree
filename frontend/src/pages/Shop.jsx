@@ -4,7 +4,7 @@ import { productService, sellerService } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { productCache, shopCache } from '../utils/cache';
-import { BiDownArrow, BiLogOut, BiMenu, BiReceipt, BiUpArrow } from 'react-icons/bi';
+import { BiDownArrow, BiHome, BiLogOut, BiMenu, BiReceipt, BiUpArrow } from 'react-icons/bi';
 import Arrow from '../assets/icons8-arrow-30.png';
 
 const CATEGORIES = [
@@ -235,21 +235,36 @@ export default function Shop() {
                           <p className='text-gray-700 font-light text-sm'>What would you like today?</p>
 
                         </div>
-                        <div onClick={() => setMainMenu(!mainMenu)} className=' w-5' ><img src={Arrow} /></div>
-                        <div className="absolute top-full mt-3 flex flex-col items-end px-3 py-3 rounded-lg bg-white/95 backdrop-blur-md gap-1 shadow-lg z-50 ml-[85px]">
+                        <div onClick={() => setMainMenu(!mainMenu)} className='w-5' ><img src={Arrow} /></div>
+                        <div className="absolute top-full mt-3 flex flex-col items-end px-3 py-3 rounded-lg bg-white/95 backdrop-blur-md shadow-lg z-50 ml-[30px] w-[200px]">
+                          <p className='bg-green-100 rounded-lg text-green-600 w-full text-right px-3 py-2 
+                          flex justify-end items-center gap-[5px]'> <BiHome /> <span>Home</span></p>
                           <button
                             onClick={() => navigate('/orders')}
-                            className="flex gap-2 items-center w-full text-right px-4 py-1 text-gray-700 hover:bg-gray-100 text-lg rounded-md"
+                            className="text-gray-800 rounded-lg mt-2 w-full text-right px-3 py-2 
+                          flex justify-end items-center gap-[5px] hover:bg-gray-100"
                             title="My Orders"
                           >
-                            <BiReceipt /> Orders
+                            <BiReceipt /> My Orders
                           </button>
+                          
                           <button
-                            onClick={logout}
-                            className="flex gap-2 items-center w-full text-right px-4 py-1 text-red-600 hover:bg-gray-100 text-lg rounded-md"
+                            onClick={() => navigate('/cart')}
+                            className=" relative text-gray-800 rounded-lg mt-2 w-full text-right px-3 py-2 hover:bg-gray-100 
+                            flex justify-end items-center gap-[5px]"
+                            title="My Cart"
                           >
-                            <BiLogOut /> Logout
-                          </button>
+                            <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                              
+                            </svg>
+                            {itemCount > 0 && (
+                              <span className="absolute -top-1 -right-1 bg-green-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                                {itemCount > 99 ? '99+' : itemCount}
+                              </span>
+                            )}
+                            <p>My Cart</p>
+                          </button> 
                       </div>
                       </div>
                       
@@ -268,38 +283,77 @@ export default function Shop() {
                       </div>
                     </>
                   }
-                  
+                  <button
+                  onClick={() => {
+                    logout();
+                    navigate('/login');
+                  }}
+                  className="text-red-600 hover:bg-red-100 text-lg rounded-full flex items-center justify-center px-3"
+                >
+                  <BiLogOut />
+                </button>
                   </main>
                   
-                  <button
-                    onClick={() => navigate('/cart')}
-                    className="relative p-2 hover:bg-gray-100 rounded-full transition-colors"
-                    title="My Cart"
-                  >
-                    <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                    {itemCount > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-green-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                        {itemCount > 99 ? '99+' : itemCount}
-                      </span>
-                    )}
-                  </button> 
+                  
                   {
                       menu ? 
                           <div>
-                              <p className='flex md:hidden gap-2 items-center px-4 py-2 rounded-lg bg-green-600 text-white' onClick={() => setMenu(!menu)}><BiMenu size='18'/>Menu</p>
-                              <div className="absolute flex md:hidden flex-col items-end mt-1 right-4 sm:right-6 px-2 py-2 rounded-lg bg-green-600 text-white">
-                                  <button
-                                    onClick={() => navigate('/orders')}
-                                    className="flex gap-2 items-center w-full text-lg hover:bg-green-700/50 w-full text-right px-2 py-1 rounded-md"
-                                    title="My Orders"
-                                  >
-                                    <BiReceipt /> Orders
-                                  </button>
+                              <p className='flex md:hidden gap-2 items-center p-2 rounded-lg border-green-600 border-2 border-solid text-green-600' onClick={() => setMenu(!menu)}><BiMenu size='20'/></p>
+
+                              <div className={`
+                                  transition-opacity duration-500 ease-in-out
+                                  ${menu ? 'opacity-50 pointer-events-auto' : 'opacity-0 pointer-events-none'}
+                                  fixed top-0 right-0 h-screen w-screen bg-black
+                                `}
+            
+                                onClick={() => setMenu(!menu)}>
+                              </div>
+                              <div className={`
+                                    fixed top-0 right-0 h-screen w-[70%] z-50
+                                    md:hidden flex flex-col items-end justify-between
+                                    p-3 bg-white
+                                    transition-transform duration-500 ease-in-out
+                                    ${menu ? 'translate-x-0' : 'translate-x-full'}
+                                  `}>
+                                  <div className='w-full flex flex-col gap-2'>
+                                    <div className='flex flex-col items-end pb-3'>
+                                      <p className='font-medium text-2xl'>Hello, {user.firstName}!</p>
+                                      <p className='text-gray-700 font-light text-base'>What would you like today?</p>
+                                    </div>
+                                    <div className='w-full'>
+                                      <p className='bg-green-100 rounded-lg text-green-600 w-full text-right px-3 py-2 
+                                      flex justify-end items-center gap-[5px]'> <BiHome /> <span>Home</span></p>
+                                      <button
+                                        onClick={() => navigate('/orders')}
+                                        className="text-gray-800 rounded-lg mt-2 w-full text-right px-3 py-2 
+                                        flex justify-end items-center gap-[5px]"
+                                        title="My Orders"
+                                      >
+                                        <BiReceipt /> My Orders
+                                      </button>
+                                      <button
+                                        onClick={() => navigate('/cart')}
+                                        className=" relative text-gray-800 rounded-lg mt-2 w-full text-right px-3 py-2 
+                                        flex justify-end items-center gap-[5px]"
+                                        title="My Cart"
+                                      >
+                                        <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                                          
+                                        </svg>
+                                        {itemCount > 0 && (
+                                          <span className="absolute -top-1 -right-1 bg-green-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                                            {itemCount > 99 ? '99+' : itemCount}
+                                          </span>
+                                        )}
+                                        <p>My Cart</p>
+                                      </button> 
+                                    </div>
+                                  </div>
                                   <button
                                     onClick={logout}
-                                    className="flex gap-2 items-center w-full text-right px-2 py-1 hover:bg-green-700/50 text-lg"
+                                    className="text-red-800 rounded-lg mt-2 w-full text-right px-3 py-2 
+                                    flex justify-end items-center gap-[5px]"
                                   >
                                     <BiLogOut /> Logout
                                   </button>
@@ -307,7 +361,7 @@ export default function Shop() {
                           </div>
                       :
                           <div>
-                              <p className='flex md:hidden gap-2 items-center px-4 py-2 rounded-lg bg-green-600 text-white' onClick={() => setMenu(!menu)}><BiMenu size='18'/>Menu</p>
+                              <p className='flex md:hidden gap-2 items-center p-2 rounded-lg border-green-600 border-2 border-solid text-green-600' onClick={() => setMenu(!menu)}><BiMenu size='20'/></p>
                           </div>
                   }
                 </>
@@ -364,13 +418,7 @@ export default function Shop() {
                   <svg className="w-5 h-5 text-yellow-400 mr-1" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                   </svg>
-                  {shop.rating && parseFloat(shop.rating) > 0 ? parseFloat(shop.rating).toFixed(1) : 'New'}
-                </span>
-                <span className="flex items-center">
-                  <svg className="w-5 h-5 text-gray-400 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                  </svg>
-                  {shop.total_orders || 0} orders
+                  {shop.rating && parseFloat(shop.rating) > 0 ? parseFloat(shop.rating).toFixed(1) : 'New Store'}
                 </span>
                 {shop.categories && shop.categories.length > 0 && (
                   <span className="flex items-center">

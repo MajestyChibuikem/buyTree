@@ -256,19 +256,14 @@ export default function SellerDashboard() {
 
                       </div>
                       <div onClick={() => setMainMenu(!mainMenu)} className=' w-5' ><img src={Arrow} /></div>
-                      <div className="absolute top-full mt-3 flex flex-col items-end px-3 py-3 rounded-lg bg-white/95 backdrop-blur-md gap-1 shadow-lg z-50 ml-[30px]">
-                        <button
-                          onClick={() => navigate('/seller/analytics')}
-                          className="flex gap-2 items-center w-full justify-end px-3 py-1 text-gray-700 hover:bg-gray-100 text-lg rounded-md"
-                        >
-                          <BiAnalyse /> Analytics
-                        </button>
-                        <button
-                          onClick={() => navigate('/seller/order-management')}
-                          className="flex gap-2 items-center w-full text-right px-3 py-1 text-gray-700 hover:bg-gray-100 text-lg rounded-md"
-                        >
-                          <BiReceipt />  Manage Orders
-                        </button>
+                      <div className="absolute top-full mt-3 flex flex-col items-end px-3 py-3 rounded-lg bg-white shadow-lg z-50 ml-[30px]">
+                        
+                        <p className='bg-green-100 rounded-lg text-green-600 w-full text-right px-3 py-2 
+                        flex justify-end items-center gap-[5px]'> <BiHome /> <span>Home</span></p>
+                        <p className='text-gray-800 rounded-lg mt-2 w-full text-right px-3 py-2 
+                        flex justify-end items-center gap-[5px] hover:bg-gray-100' onClick={() => navigate('/seller/analytics')}><BiLogoGraphql /><span>Analytics</span> </p>
+                        <p className='text-gray-800 rounded-lg mt-2 w-full text-right px-3 py-2 
+                        flex justify-end items-center gap-[5px] hover:bg-gray-100' onClick={() => navigate('/seller/order-management')}> <BiReceipt /> <span>Manage Orders</span> </p>
                     </div>
                     </div>
                     
