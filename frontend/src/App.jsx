@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ShopContextProvider } from './context/ShopContext';
 import { CartProvider } from './context/CartContext';
@@ -29,11 +29,11 @@ import AdminDashboard from './pages/AdminDashboard';
 import AdminSellers from './pages/AdminSellers';
 import AdminOrders from './pages/AdminOrders';
 import AdminAnalytics from './pages/AdminAnalytics';
+import PureVisualsTemplate from './pages/PureVisualsTemplate';
 
 // Smart fallback component that redirects based on auth status
 function SmartFallback() {
   const { user } = useAuth();
-  const location = useLocation();
 
   // If user is logged in, redirect based on role
   if (user) {
@@ -118,6 +118,9 @@ function App() {
 
           {/* Coming soon placeholder for main page */}
           <Route path="/" element={<ComingSoon />} />
+
+          {/* New PureVisuals landing page (separate route while we iterate) */}
+          <Route path="/purevisuals" element={<PureVisualsTemplate />} />
 
           {/* Seller landing page - hidden route */}
           <Route path="/buy-tree/become-a-seller" element={<Landing />} />

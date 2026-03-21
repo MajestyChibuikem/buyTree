@@ -841,3 +841,57 @@
     @apply font-medium text-green-600 hover:text-green-500;
   }
 }
+
+/* ============================================
+   PureVisuals / liquid marquee animations
+   (used by `PureVisualsTemplate` landing)
+   ============================================ */
+
+@keyframes purevisuals-liquid-blob {
+  0% {
+    transform: translate3d(-10%, -10%, 0) scale(1.05) rotate(0deg);
+    filter: blur(28px) saturate(120%);
+  }
+  50% {
+    transform: translate3d(10%, 8%, 0) scale(1.15) rotate(12deg);
+    filter: blur(34px) saturate(140%);
+  }
+  100% {
+    transform: translate3d(-10%, -10%, 0) scale(1.05) rotate(0deg);
+    filter: blur(28px) saturate(120%);
+  }
+}
+
+@keyframes purevisuals-marquee {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.purevisuals-liquid-bg {
+  /* Keep it faint so hero images still read underneath the navbar. */
+  background: radial-gradient(circle at 20% 30%, rgba(56, 189, 248, 0.25), transparent 45%),
+    radial-gradient(circle at 70% 20%, rgba(16, 185, 129, 0.22), transparent 40%),
+    radial-gradient(circle at 60% 80%, rgba(236, 72, 153, 0.16), transparent 46%);
+  animation: purevisuals-liquid-blob 9s ease-in-out infinite;
+}
+
+.purevisuals-marquee-mask {
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    black 15%,
+    black 85%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%);
+}
+
+.purevisuals-marquee-track {
+  width: max-content;
+  animation: purevisuals-marquee 30s linear infinite;
+}
+
