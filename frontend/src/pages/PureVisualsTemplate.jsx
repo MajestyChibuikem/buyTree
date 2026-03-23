@@ -18,9 +18,6 @@ const WHO_RIGHT =
 const WHO_BIG =
   'https://framerusercontent.com/images/tizU5jI420nBgVarza7aTqNZDVc.png?width=1024&height=1024';
 
-// Featured works
-const LIQUID_FUSION_IMG = 'https://framerusercontent.com/images/LOIbS2rhmapNJvTNFn65dTpPQ.png';
-const HYPER_DRIVE_IMG = 'https://framerusercontent.com/images/Bo7XI7xqY7zvBCeEt0ya1vHYEnE.png';
 
 function scrollToRef(ref) {
   if (!ref?.current) return;
@@ -80,6 +77,37 @@ export default function PureVisualsTemplate() {
   });
   const whoImgsY = useTransform(whoProgress, [0, 0.5, 1], ['0%', '-100%', '-100%']);
   const whoImgsScale = useTransform(whoProgress, [0, 1], [1, 1.08]);
+
+  // Section 3: "THE IDEA" + store panels sliding in over it
+  const ideaRef = useRef(null);
+  const { scrollYProgress: ideaProgress } = useScroll({
+    target: ideaRef,
+    offset: ['start end', 'end start'],
+  });
+  const ideaImgY = useTransform(ideaProgress, [0, 1], ['0%', '-15%']);
+  const ideaTextOpacity = useTransform(ideaProgress, [0, 0.15, 0.3], [0, 0, 1]);
+  const ideaTextY = useTransform(ideaProgress, [0, 0.15, 0.3], ['40px', '40px', '0px']);
+  // Store panels slide in mid-scroll, then hold in view before next section
+  const storeLeftX = useTransform(ideaProgress, [0.35, 0.55], ['-100%', '0%']);
+  const storeRightX = useTransform(ideaProgress, [0.35, 0.55], ['100%', '0%']);
+
+  // Section 5: "THE REACH" — parallax + stats
+  const reachRef = useRef(null);
+  const { scrollYProgress: reachProgress } = useScroll({
+    target: reachRef,
+    offset: ['start end', 'end start'],
+  });
+  const reachImgY = useTransform(reachProgress, [0, 1], ['0%', '-15%']);
+  const reachTextOpacity = useTransform(reachProgress, [0, 0.3, 0.5], [0, 0, 1]);
+
+  // Section 6: "YOUR TURN" CTA
+  const ctaRef = useRef(null);
+  const { scrollYProgress: ctaProgress } = useScroll({
+    target: ctaRef,
+    offset: ['start end', 'end start'],
+  });
+  const ctaTextOpacity = useTransform(ctaProgress, [0, 0.25, 0.5], [0, 0, 1]);
+  const ctaTextScale = useTransform(ctaProgress, [0, 0.25, 0.5], [0.85, 0.85, 1]);
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -243,6 +271,11 @@ export default function PureVisualsTemplate() {
                   style={{ transform: 'translate3d(0,0,0)' }}
                 />
               </div>
+              <div className="absolute left-[2%] top-[62%] w-[30%] px-1">
+                <p className="text-[18px] font-light text-white/50 leading-snug">
+                  See every order the moment it drops.
+                </p>
+              </div>
               {/* Image 2 — far right, starts at 5/6th height of image 1 */}
               <div className="absolute right-[2%] top-[52%] h-[45%] w-[28%] overflow-hidden rounded-2xl">
                 <img
@@ -251,6 +284,11 @@ export default function PureVisualsTemplate() {
                   className="h-full w-full object-cover blur-[1px] saturate-120"
                   style={{ transform: 'translate3d(0,0,0)' }}
                 />
+              </div>
+              <div className="absolute right-[2%] top-[99%] w-[28%] px-1 text-right">
+                <p className="text-[18px] font-light text-white/50 leading-snug">
+                  Your brand. Your identity. Worn and sold.
+                </p>
               </div>
               {/* Image 3 — far left, starts at 5/6th height of image 2 */}
               <div className="absolute left-[2%] top-[82%] h-[40%] w-[50%] overflow-hidden rounded-3xl">
@@ -261,136 +299,210 @@ export default function PureVisualsTemplate() {
                   style={{ transform: 'translate3d(0,0,0)' }}
                 />
               </div>
+              <div className="absolute left-[2%] top-[124%] w-[50%] px-1">
+                <p className="text-[18px] font-light text-white/50 leading-snug">
+                  Built on the tools that scale.
+                </p>
+              </div>
             </Motion.div>
           </div>
 
-          {/* Sticky glass text — outside overflow:hidden so it actually sticks */}
+          {/* Sticky editorial text */}
           <div className="sticky top-24 px-6 pb-20">
             <div className="mx-auto max-w-7xl">
-              <div className="relative grid items-start gap-8 md:grid-cols-12">
-                <div className="md:col-span-6">
-                  <div className="text-[68px] font-extrabold tracking-[0.02em] text-white/90 leading-none">
-                    WHO WE ARE
-                  </div>
-                </div>
-
-                <div className="md:col-span-6">
-                  <div className="max-w-xl rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
-                    <p className="text-sm leading-relaxed text-white/70">
-                      At BuyTree, we are a team dedicated to crafting
-                      compelling storefront experiences—bringing brands,
-                      stories, and concepts to life with a refined touch.
-                    </p>
-                    <div className="mt-6">
-                      <button
-                        type="button"
-                        onClick={() => {}}
-                        className="text-sm font-medium text-white/85 underline decoration-white/30 underline-offset-4 hover:decoration-white/70"
-                      >
-                        About Us
-                      </button>
-                    </div>
-                  </div>
-                </div>
+              <div className="text-[72px] font-extrabold tracking-tight leading-[0.95] sm:text-[96px]" style={{ color: '#056363' }}>
+                We Build Stores<br />That Sell
               </div>
+              <p className="mt-8 max-w-2xl text-[22px] leading-relaxed text-white/50 font-light ml-auto text-right">
+                BuyTree turns your brand into an online storefront — no code, no wait, no limits.
+              </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Section 3 (Featured works) */}
-      <section className="relative bg-black pt-24 pb-28 z-10" id="works">
-        <div className="mx-auto max-w-7xl px-6">
-          <div className="text-center">
-            <div className="text-[56px] font-extrabold tracking-[0.12em] text-white/85 leading-none">
-              FEATURED WORKS
-            </div>
-            <p className="mx-auto mt-6 max-w-3xl text-sm leading-relaxed text-white/60">
-              A showcase of our finest creations—where creativity meets
-              impact. From bold branding to immersive digital experiences, each
-              project reflects our passion for design and innovation. Explore
-              how we bring ideas to life through thoughtful execution and
-              striking visuals
-            </p>
+      {/* Section 3 — THE IDEA (dark bg, sticky — store panels close over it) */}
+      <div ref={ideaRef} className="relative z-10" style={{ height: '235vh' }}>
+        <div className="sticky top-0 h-screen overflow-hidden bg-black" style={{ transform: 'translate3d(0,0,0)' }}>
+          <Motion.div
+            className="absolute inset-0"
+            style={{ y: ideaImgY, willChange: 'transform', transform: 'translate3d(0,0,0)' }}
+          >
+            <img
+              src="https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=1920&q=80"
+              alt=""
+              className="h-[115%] w-full object-cover brightness-[0.35]"
+            />
+          </Motion.div>
+          {/* "THE IDEA" text */}
+          <div className="relative z-10 flex h-full items-center justify-center px-6">
+            <Motion.div
+              className="text-center"
+              style={{ opacity: ideaTextOpacity, y: ideaTextY, willChange: 'transform, opacity' }}
+            >
+              <div className="text-[64px] font-extrabold tracking-tight leading-[0.95] sm:text-[96px]" style={{ color: '#056363' }}>
+                Every brand starts<br />with an idea.
+              </div>
+              <p className="mt-6 max-w-2xl mx-auto text-[22px] leading-relaxed text-white/50 font-light">
+                We give it a storefront, a checkout, and a customer base — in minutes.
+              </p>
+            </Motion.div>
           </div>
-
-          <div className="mt-14 grid gap-8 md:grid-cols-2">
-            <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+          {/* Store panels — slide in over "THE IDEA" as you keep scrolling */}
+          <div className="absolute inset-0 z-20 flex pointer-events-none" style={{ transform: 'translate3d(0,0,0)' }}>
+            <Motion.div
+              className="h-full w-[70%] shrink-0 overflow-hidden bg-[#e4e4e7] pointer-events-auto"
+              style={{ x: storeLeftX, willChange: 'transform', transform: 'translate3d(0,0,0)' }}
+            >
               <img
-                src={LIQUID_FUSION_IMG}
-                alt="Liquid Fusion"
-                className="h-[280px] w-full object-cover"
+                src="https://images.unsplash.com/photo-1556740738-b6a63e27c4df?w=1920&q=80"
+                alt=""
+                className="h-full w-full object-cover"
               />
-              <div className="p-6">
-                <div className="text-lg font-semibold tracking-widest">
-                  LIQUID FUSION
+            </Motion.div>
+            <Motion.div
+              className="flex h-full w-[30%] shrink-0 items-center bg-[#e4e4e7] px-8 md:px-14 pointer-events-auto"
+              style={{ x: storeRightX, willChange: 'transform', transform: 'translate3d(0,0,0)' }}
+            >
+              <div>
+                <div className="text-[40px] font-extrabold tracking-tight leading-[0.95] text-black/85 sm:text-[56px]">
+                  We make<br />it real.
                 </div>
-                <div className="mt-2 text-xs tracking-wide text-white/50">
-                  FOOD & BEVERAGE
-                </div>
+                <p className="mt-6 text-[18px] leading-relaxed font-light italic" style={{ color: '#056363' }}>
+                  Your store. Your brand.<br />Live in minutes.
+                </p>
               </div>
-            </div>
-
-            <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
-              <img
-                src={HYPER_DRIVE_IMG}
-                alt="Hyper Drive"
-                className="h-[280px] w-full object-cover"
-              />
-              <div className="p-6">
-                <div className="text-lg font-semibold tracking-widest">
-                  HYPER DRIVE
-                </div>
-                <div className="mt-2 text-xs tracking-wide text-white/50">
-                  PRODUCT
-                </div>
-              </div>
-            </div>
+            </Motion.div>
           </div>
         </div>
-      </section>
+      </div>
 
-      {/* Placeholder contact section (for nav scroll) */}
+      {/* Section 5 — THE REACH (dark bg, full-bleed with stats) */}
       <section
+        ref={reachRef}
+        className="relative z-10 h-screen overflow-hidden bg-black"
+      >
+        <Motion.div
+          className="absolute inset-0"
+          style={{ y: reachImgY, willChange: 'transform' }}
+        >
+          <img
+            src="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=1920&q=80"
+            alt=""
+            className="h-[115%] w-full object-cover brightness-[0.3]"
+          />
+        </Motion.div>
+        <div className="relative z-10 flex h-full flex-col items-center justify-center px-6">
+          <Motion.div style={{ opacity: reachTextOpacity, willChange: 'opacity' }}>
+            <div className="text-center text-[56px] font-extrabold tracking-tight leading-[0.95] text-white sm:text-[88px]">
+              Across campuses.<br />Across states.
+            </div>
+            <p className="mt-6 text-center text-[22px] font-light italic text-white/40">
+              From dorm rooms to delivery trucks — BuyTree sellers are everywhere.
+            </p>
+            <div className="mt-16 flex flex-wrap items-center justify-center gap-14 sm:gap-20">
+              {[
+                { num: '100+', label: 'Stores launched' },
+                { num: '5,000+', label: 'Orders delivered' },
+                { num: '10+', label: 'Campuses connected' },
+              ].map((s) => (
+                <div key={s.label} className="text-center">
+                  <div className="text-[48px] font-extrabold tracking-tight sm:text-[64px]" style={{ color: '#056363' }}>
+                    {s.num}
+                  </div>
+                  <div className="mt-2 text-[18px] font-light text-white/40">
+                    {s.label}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Motion.div>
+        </div>
+      </section>
+
+      {/* Section 6 — YOUR TURN (cinematic CTA) */}
+      <section
+        ref={ctaRef}
+        className="relative z-10 h-screen overflow-hidden bg-black"
+      >
+        <div className="absolute inset-0">
+          <img
+            src="https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=1920&q=80"
+            alt=""
+            className="h-full w-full object-cover brightness-[0.2]"
+          />
+        </div>
+        <div className="relative z-10 flex h-full flex-col items-center justify-center px-6">
+          <Motion.div
+            className="text-center"
+            style={{ opacity: ctaTextOpacity, scale: ctaTextScale, willChange: 'transform, opacity' }}
+          >
+            <div className="text-[80px] font-extrabold tracking-tight leading-none sm:text-[120px]" style={{ color: '#056363' }}>
+              Your turn.
+            </div>
+            <p className="mt-6 text-[20px] font-light text-white/50">
+              Launch your store in under 5 minutes. No code. No fees to start.
+            </p>
+            <div className="mt-12 flex flex-wrap items-center justify-center gap-5">
+              <button
+                type="button"
+                onClick={() => navigate('/signup')}
+                className="rounded-full px-10 py-4 text-[18px] font-semibold text-white transition-opacity hover:opacity-90"
+                style={{ backgroundColor: '#056363' }}
+              >
+                Launch Your Store
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate('/shop/demo')}
+                className="rounded-full border-2 px-10 py-4 text-[18px] font-semibold transition-colors hover:bg-white/5"
+                style={{ borderColor: '#056363', color: '#056363' }}
+              >
+                See How It Works
+              </button>
+            </div>
+          </Motion.div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer
         ref={contactRef}
         id="contact"
-        className="bg-black scroll-mt-28 pt-10 pb-24"
+        className="relative bg-black pt-16 pb-10 z-10"
       >
         <div className="mx-auto max-w-7xl px-6">
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-10 backdrop-blur-xl">
-            <div className="text-2xl font-bold tracking-wide">
-              Contact (placeholder)
+          <div className="flex flex-col items-center justify-between gap-10 md:flex-row md:items-start">
+            <div>
+              <div className="text-2xl font-extrabold tracking-widest" style={{ color: '#056363' }}>
+                {brand}
+              </div>
+              <p className="mt-3 max-w-xs text-[16px] leading-relaxed text-white/40">
+                The simplest way to launch your online store and start selling to your community.
+              </p>
             </div>
-            <p className="mt-3 text-sm leading-relaxed text-white/60">
-              Add your form/link here later. For now, the nav scroll is wired
-              up to this section.
-            </p>
-            <div className="mt-6 flex gap-3">
-              <button
-                type="button"
-                className="rounded-full border border-white/15 bg-white/5 px-6 py-2 text-sm font-medium text-white/80 hover:bg-white/10"
-                onClick={() => {}}
-              >
-                Email us
-              </button>
-              <button
-                type="button"
-                className="rounded-full bg-white/15 px-6 py-2 text-sm font-medium text-white/90 hover:bg-white/20"
-                onClick={() => {}}
-              >
-                Call / WhatsApp
-              </button>
-              <button
-                type="button"
-                className="rounded-full bg-white px-6 py-2 text-sm font-semibold text-black hover:bg-white/80"
-                onClick={() => navigate('/')}
-              >
-                Back to app
-              </button>
+            <div className="flex gap-16 text-[16px]">
+              <div>
+                <div className="font-semibold tracking-wide text-white/70">Product</div>
+                <div className="mt-4 flex flex-col gap-3 text-white/40">
+                  <button type="button" onClick={() => scrollToRef(aboutRef)} className="text-left hover:text-white/60">About</button>
+                  <button type="button" className="text-left hover:text-white/60">Features</button>
+                </div>
+              </div>
+              <div>
+                <div className="font-semibold tracking-wide text-white/70">Legal</div>
+                <div className="mt-4 flex flex-col gap-3 text-white/40">
+                  <button type="button" className="text-left hover:text-white/60">Privacy</button>
+                  <button type="button" className="text-left hover:text-white/60">Terms</button>
+                </div>
+              </div>
             </div>
           </div>
+          <div className="mt-14 border-t border-white/10 pt-6 text-center text-sm text-white/30">
+            &copy; {new Date().getFullYear()} BuyTree. All rights reserved.
+          </div>
         </div>
-      </section>
+      </footer>
     </div>
   );
 }
