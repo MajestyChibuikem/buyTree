@@ -58,7 +58,7 @@ export default function PureVisualsTemplate() {
   const splitOpacity = useTransform(heroProgress, [0, 0.55, 0.8, 1], [1, 1, 0, 0]);
 
   // BUYTREE teal color fades in as panels split
-  const brandColorOpacity = useTransform(heroProgress, [0, 0.25, 0.45, 0.55], [0.15, 0.3, 0.7, 1]);
+  const brandColorOpacity = useTransform(heroProgress, [0, 0.1, 0.25, 0.35], [0.15, 0.5, 0.85, 1]);
 
   // Phase 2: BUYTREE moves to top and scales up
   const brandY = useTransform(heroProgress, [0, 0.35, 0.5, 1], ['0%', '0%', '-120%', '-120%']);
@@ -310,7 +310,7 @@ export default function PureVisualsTemplate() {
           {/* Sticky editorial text */}
           <div className="sticky top-24 px-6 pb-20">
             <div className="mx-auto max-w-7xl">
-              <div className="text-[72px] font-extrabold tracking-tight leading-[0.95] sm:text-[96px]" style={{ color: '#056363' }}>
+              <div className="text-[72px] font-extrabold tracking-tight leading-[0.95] sm:text-[96px]" style={{ color: '#65E4CF' }}>
                 We Build Stores<br />That Sell
               </div>
               <p className="mt-8 max-w-2xl text-[22px] leading-relaxed text-white/50 font-light ml-auto text-right">
@@ -340,7 +340,7 @@ export default function PureVisualsTemplate() {
               className="text-center"
               style={{ opacity: ideaTextOpacity, y: ideaTextY, willChange: 'transform, opacity' }}
             >
-              <div className="text-[64px] font-extrabold tracking-tight leading-[0.95] sm:text-[96px]" style={{ color: '#056363' }}>
+              <div className="text-[64px] font-extrabold tracking-tight leading-[0.95] sm:text-[96px]" style={{ color: '#65E4CF' }}>
                 Every brand starts<br />with an idea.
               </div>
               <p className="mt-6 max-w-2xl mx-auto text-[22px] leading-relaxed text-white/50 font-light">
@@ -407,7 +407,7 @@ export default function PureVisualsTemplate() {
                 { num: '10+', label: 'Campuses connected' },
               ].map((s) => (
                 <div key={s.label} className="text-center">
-                  <div className="text-[48px] font-extrabold tracking-tight sm:text-[64px]" style={{ color: '#056363' }}>
+                  <div className="text-[48px] font-extrabold tracking-tight sm:text-[64px]" style={{ color: '#65E4CF' }}>
                     {s.num}
                   </div>
                   <div className="mt-2 text-[18px] font-light text-white/40">
@@ -437,7 +437,7 @@ export default function PureVisualsTemplate() {
             className="text-center"
             style={{ opacity: ctaTextOpacity, scale: ctaTextScale, willChange: 'transform, opacity' }}
           >
-            <div className="text-[80px] font-extrabold tracking-tight leading-none sm:text-[120px]" style={{ color: '#056363' }}>
+            <div className="text-[80px] font-extrabold tracking-tight leading-none sm:text-[120px]" style={{ color: '#65E4CF' }}>
               Your turn.
             </div>
             <p className="mt-6 text-[20px] font-light text-white/50">
@@ -448,7 +448,7 @@ export default function PureVisualsTemplate() {
                 type="button"
                 onClick={() => navigate('/signup')}
                 className="rounded-full px-10 py-4 text-[18px] font-semibold text-white transition-opacity hover:opacity-90"
-                style={{ backgroundColor: '#056363' }}
+                style={{ backgroundColor: '#65E4CF' }}
               >
                 Launch Your Store
               </button>
@@ -456,7 +456,7 @@ export default function PureVisualsTemplate() {
                 type="button"
                 onClick={() => navigate('/shop/demo')}
                 className="rounded-full border-2 px-10 py-4 text-[18px] font-semibold transition-colors hover:bg-white/5"
-                style={{ borderColor: '#056363', color: '#056363' }}
+                style={{ borderColor: '#65E4CF', color: '#65E4CF' }}
               >
                 See How It Works
               </button>
@@ -474,7 +474,7 @@ export default function PureVisualsTemplate() {
         <div className="mx-auto max-w-7xl px-6">
           <div className="flex flex-col items-center justify-between gap-10 md:flex-row md:items-start">
             <div>
-              <div className="text-2xl font-extrabold tracking-widest" style={{ color: '#056363' }}>
+              <div className="text-2xl font-extrabold tracking-widest" style={{ color: '#65E4CF' }}>
                 {brand}
               </div>
               <p className="mt-3 max-w-xs text-[16px] leading-relaxed text-white/40">
