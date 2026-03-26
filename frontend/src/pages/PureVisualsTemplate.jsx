@@ -52,22 +52,22 @@ export default function PureVisualsTemplate() {
   });
 
   // All transforms derive from the smoothed progress — no per-transform springs needed.
-  // Panel split
-  const leftX = useTransform(heroProgress, [0, 0.55, 1], ['0%', '-120%', '-120%']);
-  const rightX = useTransform(heroProgress, [0, 0.55, 1], ['0%', '120%', '120%']);
-  const splitOpacity = useTransform(heroProgress, [0, 0.55, 0.8, 1], [1, 1, 0, 0]);
+  // Panel split — images start off-screen, slide in to cover BUYTREE text
+  const leftX = useTransform(heroProgress, [0, 0.55, 1], ['-120%', '0%', '0%']);
+  const rightX = useTransform(heroProgress, [0, 0.55, 1], ['120%', '0%', '0%']);
+  const splitOpacity = useTransform(heroProgress, [0, 0.2, 0.55, 1], [0, 1, 1, 1]);
 
-  // BUYTREE teal color fades in as panels split
-  const brandColorOpacity = useTransform(heroProgress, [0, 0.1, 0.25, 0.35], [0.15, 0.5, 0.85, 1]);
+  // BUYTREE teal color — starts fully visible, fades as images cover it
+  const brandColorOpacity = useTransform(heroProgress, [0, 0.35, 0.55, 1], [1, 1, 0.15, 0.15]);
 
-  // Phase 2: BUYTREE moves to top and scales up
-  const brandY = useTransform(heroProgress, [0, 0.35, 0.5, 1], ['0%', '0%', '-120%', '-120%']);
-  const brandScale = useTransform(heroProgress, [0, 0.35, 0.5, 1], [1, 1, 1.8, 1.8]);
+  // BUYTREE starts big, shrinks as images slide in to cover it
+  const brandY = useTransform(heroProgress, [0, 1], ['-20%', '-20%']);
+  const brandScale = useTransform(heroProgress, [0, 0.55, 1], [1.8, 1, 1]);
 
-  // Tagline texts
-  const taglineOpacity = useTransform(heroProgress, [0, 0.22, 0.35, 1], [0, 0, 1, 1]);
-  const taglineLeftX = useTransform(heroProgress, [0, 0.22, 0.35, 1], ['-60px', '-60px', '0px', '0px']);
-  const taglineRightX = useTransform(heroProgress, [0, 0.22, 0.35, 1], ['60px', '60px', '0px', '0px']);
+  // Tagline texts — visible at start, fade out as images arrive
+  const taglineOpacity = useTransform(heroProgress, [0, 0.35, 0.55, 1], [1, 1, 0, 0]);
+  const taglineLeftX = useTransform(heroProgress, [0, 1], ['0px', '0px']);
+  const taglineRightX = useTransform(heroProgress, [0, 1], ['0px', '0px']);
 
   // Section 2: sticky text + images translating upward.
   const whoRef = useRef(null);
@@ -195,7 +195,7 @@ export default function PureVisualsTemplate() {
           </Motion.div>
 
           {/* Tagline — appears after BUYTREE moves up */}
-          <div className="absolute top-1/2 left-0 right-0 -translate-y-1/2 px-8">
+          <div className="absolute top-[68%] left-0 right-0 -translate-y-1/2 px-8">
             <div className="mx-auto flex max-w-5xl items-center justify-between gap-6">
               <Motion.div
                 className="text-[28px] font-light italic leading-tight text-black sm:text-[36px]"
