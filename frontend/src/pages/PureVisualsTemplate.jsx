@@ -213,32 +213,7 @@ export default function PureVisualsTemplate() {
           </div>
 
           {/* Scrolling brand logos — fades at edges, infinite seamless loop */}
-          <div className="absolute bottom-10 left-0 right-0">
-            <div className="purevisuals-marquee-mask overflow-hidden pt-6">
-              <div className="purevisuals-marquee-track flex items-center gap-20">
-                {/* First set — enough logos to fill full screen width */}
-                {Array.from({ length: 10 }).map((_, i) => (
-                  <img
-                    key={`a-${i}`}
-                    src={i % 2 === 0 ? '/logo-black.png' : '/pokas-logo.jpg'}
-                    alt=""
-                    className="h-[84px] w-auto shrink-0 opacity-60"
-                    aria-hidden="true"
-                  />
-                ))}
-                {/* Identical duplicate for seamless loop */}
-                {Array.from({ length: 10 }).map((_, i) => (
-                  <img
-                    key={`b-${i}`}
-                    src={i % 2 === 0 ? '/logo-black.png' : '/pokas-logo.jpg'}
-                    alt=""
-                    className="h-[84px] w-auto shrink-0 opacity-60"
-                    aria-hidden="true"
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
+          
         </div>
       </div>
 
