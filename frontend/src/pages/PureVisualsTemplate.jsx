@@ -6,9 +6,9 @@ import Lenis from 'lenis';
 const brand = 'BUYTREE';
 
 const HERO_LEFT =
-  'https://framerusercontent.com/images/47vWLizj8nJWWX1ItmZK8MEspc.png?width=1024&height=1024';
+  '/images/hero-left.png';
 const HERO_RIGHT =
-  'https://framerusercontent.com/images/YDcBLDpZXBmQp6m1BDMjM5L5s.png?width=896&height=1280';
+  '/images/hero-right.png';
 
 // Section 2 images (left / right / large "blown up" image)
 const WHO_LEFT =

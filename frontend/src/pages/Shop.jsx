@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { productCache, shopCache } from '../utils/cache';
 import ShopSEO from '../components/SEO/ShopSEO';
+import ChatWidget from '../components/common/ChatWidget';
 
 const CATEGORIES = [
   'All',
@@ -588,6 +589,7 @@ export default function Shop() {
         </div>
       )}
       </div>
+      <ChatWidget shopSlug={shopSlug} />
     </>
   );
 }

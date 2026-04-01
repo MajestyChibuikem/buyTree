@@ -1,4 +1,5 @@
 const db = require('../config/database');
+const aiService = require('../services/aiService');
 
 // Create a review
 const createReview = async (req, res) => {
@@ -59,10 +60,22 @@ const createReview = async (req, res) => {
       [productId, buyerId, orderId || null, rating, title || null, comment || null, images || null]
     );
 
+    // Fire-and-forget: analyze review authenticity in the background
+    const review = result.rows[0];
+    setImmediate(() => {
+      aiService.analyzeReview({
+        reviewId: review.id,
+        text: review.comment || '',
+        rating: review.rating,
+        productName: review.product_name || '',
+        productCategory: '',
+      }).catch(() => {}); // silently ignore — never block the buyer
+    });
+
     res.status(201).json({
       success: true,
       message: 'Review created successfully',
-      data: { review: result.rows[0] },
+      data: { review },
     });
   } catch (error) {
     console.error('Create review error:', error);

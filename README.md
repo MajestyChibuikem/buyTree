@@ -1,14 +1,34 @@
 # BuyTree
 
-A full-stack e-commerce platform built with modern web technologies.
+White-label e-commerce infrastructure for sellers in Nigeria. BuyTree gives each seller their own branded storefront — their logo, their colors, their link — powered entirely by BuyTree behind the scenes.
 
-## Features
+This is not a marketplace. There is no public product feed or central discovery page. Each seller gets an independent store at a custom link (e.g. `buytree.ng/store/shopname`) that they share directly with their own customers. BuyTree is the invisible infrastructure: payments, order management, analytics, and dispute resolution.
 
-- User shopping experience with product browsing and checkout
-- Seller dashboard for managing products and orders
-- Comprehensive analytics and revenue tracking
-- Order management system
-- Secure payment processing
+Think Shopify, not Amazon.
+
+## What Sellers Get
+
+- A branded storefront (custom logo, background color, shop name)
+- A dedicated store link matching their brand name
+- Product and inventory management
+- Order tracking and fulfillment tools
+- Paystack-powered payments with automatic payout (T+1 after delivery)
+- Analytics and revenue tracking
+- Dispute resolution with buyer protection
+
+## What Buyers Experience
+
+- A seller-branded shopping experience — BuyTree branding is minimal/invisible
+- Cart, checkout, and payment via Paystack
+- Order tracking: Paid → Ready for Pickup → In Transit → Delivered
+- 48-hour dispute window after delivery confirmation
+- Minimum order value: ₦4,000
+
+## Platform Rules
+
+- BuyTree takes a 5% fee on every transaction
+- Sellers must be approved by a BuyTree admin before going live
+- Sellers are paid out T+1 after the buyer confirms delivery
 
 ## Screenshots
 
@@ -63,9 +83,12 @@ Refer to [START_HERE.md](START_HERE.md) for setup instructions and [QUICKSTART.m
 
 ## Tech Stack
 
-- **Frontend**: Modern JavaScript framework
-- **Backend**: Node.js
-- **Database**: MongoDB/PostgreSQL
+- **Frontend**: React 19 + Vite + Tailwind CSS + Material-UI
+- **Backend**: Node.js + Express
+- **Database**: PostgreSQL (Supabase)
+- **Payments**: Paystack
+- **Image Storage**: Cloudinary
+- **Email**: Resend
 
 ## License
 

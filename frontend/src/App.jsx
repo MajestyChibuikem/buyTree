@@ -29,6 +29,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import AdminSellers from './pages/AdminSellers';
 import AdminOrders from './pages/AdminOrders';
 import AdminAnalytics from './pages/AdminAnalytics';
+import SellerProducts from './pages/SellerProducts';
 import PureVisualsTemplate from './pages/PureVisualsTemplate';
 
 // Smart fallback component that redirects based on auth status
@@ -116,8 +117,8 @@ function App() {
           {/* <Route path="/search" element={<SearchResults />} /> */}
           {/* <Route path="/browse" element={<ProtectedRoute><StoreBrowsing /></ProtectedRoute>} /> */}
 
-          {/* Coming soon placeholder for main page */}
-          <Route path="/" element={<ComingSoon />} />
+          {/* Home page */}
+          <Route path="/" element={<PureVisualsTemplate />} />
 
           {/* New PureVisuals landing page (separate route while we iterate) */}
           <Route path="/purevisuals" element={<PureVisualsTemplate />} />
@@ -158,6 +159,14 @@ function App() {
             }
           />
           <Route
+            path="/seller/products"
+            element={
+              <ProtectedRoute>
+                <SellerProducts />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/seller/analytics"
             element={
               <ProtectedRoute>
@@ -169,7 +178,7 @@ function App() {
           <Route
             path="/admin/dashboard"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredRole="admin">
                 <AdminDashboard />
               </ProtectedRoute>
             }
@@ -177,7 +186,7 @@ function App() {
           <Route
             path="/admin/sellers"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredRole="admin">
                 <AdminSellers />
               </ProtectedRoute>
             }
@@ -185,7 +194,7 @@ function App() {
           <Route
             path="/admin/orders"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredRole="admin">
                 <AdminOrders />
               </ProtectedRoute>
             }
@@ -193,7 +202,7 @@ function App() {
           <Route
             path="/admin/analytics"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredRole="admin">
                 <AdminAnalytics />
               </ProtectedRoute>
             }

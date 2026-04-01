@@ -102,6 +102,8 @@ const reviewRoutes = require('./routes/review.routes');
 const favoriteRoutes = require('./routes/favorite.routes');
 const passwordResetRoutes = require('./routes/passwordReset.routes');
 const adminRoutes = require('./routes/admin.routes');
+const aiRoutes = require('./routes/ai.routes');
+const disputeRoutes = require('./routes/dispute.routes');
 
 // Export limiters for use in routes (DISABLED FOR TESTING)
 // app.set('authLimiter', authLimiter);
@@ -121,6 +123,8 @@ app.use('/api/analytics', analyticsRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/favorites', favoriteRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/ai', aiRoutes);
+app.use('/api/disputes', disputeRoutes);
 
 // API root endpoint
 app.get('/api', (req, res) => {

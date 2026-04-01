@@ -337,4 +337,22 @@ export const favoriteService = {
   },
 };
 
+// AI endpoints
+export const aiService = {
+  chat: async (messages, shopSlug) => {
+    const response = await api.post('/ai/chat', { messages, shopSlug });
+    return response.data;
+  },
+
+  generateDescription: async ({ name, price, category }) => {
+    const response = await api.post('/ai/generate-description', { name, price, category });
+    return response.data;
+  },
+
+  suggestCategory: async ({ name, description }) => {
+    const response = await api.post('/ai/suggest-category', { name, description });
+    return response.data;
+  },
+};
+
 export default api;
