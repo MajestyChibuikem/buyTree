@@ -20,6 +20,7 @@ A reference for every routed page: what it is, the URL, and what access level is
 
 ---
 
+
 ## Authenticated (any logged-in user)
 
 These pages redirect to `/login` if you are not logged in.
