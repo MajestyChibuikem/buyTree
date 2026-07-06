@@ -4,6 +4,26 @@ A collection of smart architectural decisions, performance optimizations, and te
 
 ---
 
+## Frontend Performance & UX
+
+### 1. In-Memory API Caching for Near-Instant Navigation
+* **Problem**: Navigating between Seller Dashboard tabs (Dashboard, Products, Orders) caused a noticeable 500ms+ delay every time because the frontend always fetched fresh data from the backend, triggering a full page loading spinner and unmounting the Cinematic Layout.
+* **Solution**: Implemented an ultra-lightweight global `GET` request cache in `services/api.js`.
+  * **How it works**: The cache stores responses for 5 minutes (`CACHE_DURATION = 5 * 60 * 1000`). If a `GET` request is made to the same URL, it instantly returns the cached data, bypassing the network entirely.
+  * **Auto-Invalidation**: Whenever a mutation request (`POST`, `PUT`, `DELETE`, `PATCH`) is made, the cache is instantly cleared (`cache.clear()`). This guarantees the user sees fresh data immediately after modifying a product or order, without sacrificing read performance.
+* **Result**: Switching tabs is now 0ms. The UI feels native and instantly responsive.
+
+### 2. Pure CSS Lightweight Charts (Zero Dependencies)
+* **Problem**: The dashboard and analytics pages were relying on `@mui/x-charts`, `@mui/material`, and `@emotion/react`, which added immense weight to the JavaScript bundle size. On slow networks, downloading these large libraries severely impacted the Initial Page Load.
+* **Solution**: Completely uninstalled MUI and Emotion dependencies. Built custom, pure Tailwind CSS / Framer Motion charts:
+  * **Sales Volume Bar Chart**: Uses standard flexbox and height percentages `(val / maxSales) * 100` mapped onto `Motion.div` elements.
+  * **Revenue Waterfall**: Uses absolute positioning and gradient overlays to create a sleek, cinematic data visualization.
+* **Result**: Reduced bundle size significantly, eliminated heavy third-party chart rendering lag, and maintained the beautiful Cinematic Light Theme aesthetics.
+
+## Backend & Integrations
+
+---
+
 ## 🧵 Thread 1: How we eliminated SPA loading spinners with a 30-line API Cache
 
 **Tweet 1:**

@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { analyticsService } from '../services/api';
-import { BarChart } from '@mui/x-charts/BarChart';
+import CinematicDashboardLayout from '../layouts/CinematicDashboardLayout';
+import { motion as Motion } from 'framer-motion';
 
 export default function SellerAnalytics() {
   const navigate = useNavigate();
@@ -22,27 +23,28 @@ export default function SellerAnalytics() {
       navigate('/login');
       return;
     }
-    fetchAnalytics();
-    fetchViewAnalytics();
+    
+    Promise.all([fetchAnalytics(), fetchViewAnalytics()])
+      .finally(() => {
+        setLoading(false);
+      });
+      
   }, [user, navigate]);
 
   useEffect(() => {
-    if (user?.role === 'seller') {
+    if (user?.role === 'seller' && !loading) {
       fetchViewAnalytics();
     }
   }, [viewPeriod]);
 
   const fetchAnalytics = async () => {
     try {
-      setLoading(true);
       const response = await analyticsService.getSellerAnalytics();
       setAnalytics(response.data);
       setError('');
     } catch (err) {
       setError('Failed to load analytics');
       console.error('Analytics error:', err);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -62,7 +64,8 @@ export default function SellerAnalytics() {
     return new Intl.NumberFormat('en-NG', {
       style: 'currency',
       currency: 'NGN',
-    }).format(amount);
+      minimumFractionDigits: 0,
+    }).format(amount).replace('NGN', '₦');
   };
 
   const formatDate = (dateString) => {
@@ -72,478 +75,315 @@ export default function SellerAnalytics() {
     }).format(new Date(dateString));
   };
 
-  const getStatusBadgeColor = (status) => {
-    switch (status) {
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'processing':
-        return 'bg-blue-100 text-blue-800';
-      case 'shipped':
-        return 'bg-purple-100 text-purple-800';
-      case 'delivered':
-        return 'bg-green-100 text-green-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+  const getStatusStyle = (status) => {
+    switch (status.toLowerCase()) {
+      case 'completed': 
+      case 'delivered': return 'bg-cinematic-dark/10 text-cinematic-dark border-cinematic-dark/20';
+      case 'pending': return 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20';
+      case 'in progress':
+      case 'processing': 
+      case 'shipped': return 'bg-blue-500/10 text-blue-600 border-blue-500/20';
+      case 'canceled': return 'bg-red-500/10 text-red-600 border-red-500/20';
+      default: return 'bg-zinc-100 text-zinc-500 border-zinc-200';
     }
   };
 
   if (loading) {
     return (
-      <div className="page-container flex-center">
-        <div className="text-center">
-          <div className="loading-spinner-lg"></div>
-          <p className="loading-text">Loading analytics...</p>
+      <CinematicDashboardLayout>
+        <div className="h-[70vh] flex items-center justify-center">
+          <div className="w-12 h-12 border-4 border-cinematic-dark border-t-transparent rounded-full animate-spin"></div>
         </div>
-      </div>
+      </CinematicDashboardLayout>
     );
   }
 
   if (error) {
     return (
-      <div className="page-container flex-center">
-        <div className="text-center">
-          <p className="error-text">{error}</p>
+      <CinematicDashboardLayout>
+        <div className="h-[70vh] flex flex-col items-center justify-center text-center">
+          <p className="text-red-500 font-bold mb-4">{error}</p>
           <button
-            onClick={fetchAnalytics}
-            className="btn-primary mt-4"
+            onClick={() => { setLoading(true); fetchAnalytics(); }}
+            className="px-6 py-2 rounded-full bg-cinematic-dark text-white font-bold"
           >
             Retry
           </button>
         </div>
-      </div>
+      </CinematicDashboardLayout>
     );
   }
 
   const { overview, revenue_by_day, top_products, low_stock_products, recent_orders } = analytics || {};
 
-  // Calculate max revenue for chart scaling
-  const maxRevenue = Math.max(...(revenue_by_day || []).map((day) => parseFloat(day.revenue)));
+  // Chart data
+  const revenueData = revenue_by_day ? revenue_by_day.map(d => parseFloat(d.revenue) || 0) : [];
+  const ordersData = revenue_by_day ? revenue_by_day.map(d => parseInt(d.orders_count) || 0) : [];
+  const maxRevenue = Math.max(...revenueData, 1000);
+  const maxOrders = Math.max(...ordersData, 10);
 
   return (
-    <div className="page-container">
-      {/* Header */}
-      <div className="nav-header">
-        <div className="nav-content">
-          <div className="flex-between">
-            <div>
-              <h1 className="heading-xl">Analytics Dashboard</h1>
-              <p className="text-muted">Track your sales performance and insights</p>
-            </div>
-            <div className="nav-links">
-              <Link
-                to="/seller/dashboard"
-                className="btn-secondary"
-              >
-                Products
-              </Link>
-              <Link
-                to="/seller/orders"
-                className="btn-secondary"
-              >
-                Orders
-              </Link>
-              <button
-                onClick={logout}
-                className="btn-danger"
-              >
-                Logout
-              </button>
-            </div>
+    <CinematicDashboardLayout>
+      <div className="space-y-12">
+        {/* HEADER */}
+        <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div>
+            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-cinematic-dark mb-2">
+              Analytics
+            </h1>
+            <p className="text-zinc-500 text-lg font-medium">
+              Track your sales performance and insights
+            </p>
           </div>
-        </div>
-      </div>
-
-      <div className="content-wrapper">
-        {/* Overview Stats */}
-        <div className="grid-4 mb-8">
-          {/* Total Revenue */}
-          <div className="stat-card-green">
-            <div className="flex-between">
-              <div>
-                <p className="stat-label">Total Revenue</p>
-                <p className="stat-value-lg">
-                  {formatPrice(parseFloat(overview?.total_revenue) || 0)}
-                </p>
-                {overview?.revenue_growth_percentage !== 0 && (
-                  <p
-                    className={`text-sm mt-1 ${
-                      overview?.revenue_growth_percentage > 0 ? 'text-green-600' : 'text-red-600'
-                    }`}
-                  >
-                    {overview?.revenue_growth_percentage > 0 ? '+' : ''}
-                    {overview?.revenue_growth_percentage?.toFixed(1)}% from last month
-                  </p>
-                )}
-              </div>
-              <div className="icon-container-green">
-                <svg className="icon-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </div>
-            </div>
+          <div className="flex gap-4">
+            <Link to="/seller/dashboard" className="px-6 py-3 rounded-full bg-white border border-zinc-200 text-zinc-700 font-bold hover:bg-zinc-50 hover:text-cinematic-dark transition-colors shadow-sm">
+              Dashboard
+            </Link>
           </div>
+        </header>
 
-          {/* Total Orders */}
-          <div className="stat-card-blue">
-            <div className="flex-between">
-              <div>
-                <p className="stat-label">Total Orders</p>
-                <p className="stat-value-lg">{overview?.total_orders || 0}</p>
-                {overview?.order_growth_percentage !== 0 && (
-                  <p
-                    className={`text-sm mt-1 ${
-                      overview?.order_growth_percentage > 0 ? 'text-green-600' : 'text-red-600'
-                    }`}
-                  >
-                    {overview?.order_growth_percentage > 0 ? '+' : ''}
-                    {overview?.order_growth_percentage?.toFixed(1)}% from last month
-                  </p>
-                )}
-              </div>
-              <div className="icon-container-blue">
-                <svg className="icon-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
-                  />
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          {/* Average Order Value */}
-          <div className="stat-card-purple">
-            <div className="flex-between">
-              <div>
-                <p className="stat-label">Avg. Order Value</p>
-                <p className="stat-value-lg">
-                  {formatPrice(parseFloat(overview?.average_order_value) || 0)}
-                </p>
-              </div>
-              <div className="icon-container-purple">
-                <svg className="icon-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"
-                  />
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          {/* Pending Orders */}
-          <div className="stat-card-yellow">
-            <div className="flex-between">
-              <div>
-                <p className="stat-label">Pending Orders</p>
-                <p className="stat-value-lg">{overview?.pending_orders || 0}</p>
-                <p className="stat-description">Need your attention</p>
-              </div>
-              <div className="icon-container-yellow">
-                <svg className="icon-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Order Status Breakdown */}
-        <div className="card-section">
-          <h2 className="section-header-mb-4">Order Status Breakdown</h2>
-          <div className="status-grid">
-            <div className="status-card-yellow">
-              <p className="status-value">{overview?.pending_orders || 0}</p>
-              <p className="status-label">Pending</p>
-            </div>
-            <div className="status-card-blue">
-              <p className="status-value">{overview?.processing_orders || 0}</p>
-              <p className="status-label">Processing</p>
-            </div>
-            <div className="status-card-purple">
-              <p className="status-value">{overview?.shipped_orders || 0}</p>
-              <p className="status-label">Shipped</p>
-            </div>
-            <div className="status-card-green">
-              <p className="status-value">{overview?.delivered_orders || 0}</p>
-              <p className="status-label">Delivered</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Revenue Chart - Last 30 Days */}
-        <div className="card-section">
-          <h2 className="section-header-mb-4">Revenue (Last 30 Days)</h2>
-          {revenue_by_day && revenue_by_day.length > 0 ? (
-            <div className="space-y-4">
-              {/* MUI BarChart */}
-              <div className="w-full" style={{ height: '400px' }}>
-                <BarChart
-                  dataset={revenue_by_day.map(day => ({
-                    date: formatDate(day.date),
-                    revenue: parseFloat(day.revenue) || 0,
-                    orders: parseInt(day.orders_count) || 0,
-                  }))}
-                  xAxis={[{
-                    scaleType: 'band',
-                    dataKey: 'date',
-                    tickLabelStyle: {
-                      angle: -45,
-                      textAnchor: 'end',
-                      fontSize: 11,
-                    },
-                  }]}
-                  yAxis={[{
-                    label: 'Revenue (₦)',
-                    valueFormatter: (value) => formatPrice(value),
-                  }]}
-                  series={[
-                    {
-                      dataKey: 'revenue',
-                      label: 'Daily Revenue',
-                      color: '#10b981',
-                      valueFormatter: (value) => formatPrice(value),
-                    }
-                  ]}
-                  grid={{ horizontal: true }}
-                  margin={{ top: 20, right: 20, bottom: 80, left: 80 }}
-                  slotProps={{
-                    legend: { hidden: false },
-                  }}
-                />
-              </div>
-
-              {/* Summary stats below chart */}
-              <div className="grid-3 pt-4 border-t border-gray-200">
-                <div className="text-center">
-                  <p className="stat-label-sm">Total Revenue</p>
-                  <p className="stat-value-md">
-                    {formatPrice(revenue_by_day.reduce((sum, day) => sum + parseFloat(day.revenue || 0), 0))}
-                  </p>
-                </div>
-                <div className="text-center">
-                  <p className="stat-label-sm">Total Orders</p>
-                  <p className="stat-value-md">
-                    {revenue_by_day.reduce((sum, day) => sum + parseInt(day.orders_count || 0), 0)}
-                  </p>
-                </div>
-                <div className="text-center">
-                  <p className="stat-label-sm">Daily Average</p>
-                  <p className="stat-value-md">
-                    {formatPrice(
-                      revenue_by_day.reduce((sum, day) => sum + parseFloat(day.revenue || 0), 0) /
-                      revenue_by_day.length
-                    )}
-                  </p>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="empty-state-bg">
-              <svg className="empty-state-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
-              <p>No revenue data available</p>
-              <p className="empty-state-subtitle">Start making sales to see your revenue chart</p>
-            </div>
-          )}
-        </div>
-
-        {/* Product Views Analytics */}
-        <div className="card-section">
-          <div className="flex-between mb-4">
-            <h2 className="section-header">Product Views</h2>
-            <select
-              value={viewPeriod}
-              onChange={(e) => setViewPeriod(e.target.value)}
-              className="form-select-sm"
+        {/* OVERVIEW STATS */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[
+            { 
+              label: 'Total Revenue', 
+              value: formatPrice(parseFloat(overview?.total_revenue) || 0), 
+              growth: overview?.revenue_growth_percentage,
+              icon: <svg className="w-6 h-6 text-cinematic-dark" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            },
+            { 
+              label: 'Total Orders', 
+              value: overview?.total_orders || 0, 
+              growth: overview?.order_growth_percentage,
+              icon: <svg className="w-6 h-6 text-cinematic-dark" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
+            },
+            { 
+              label: 'Avg. Order Value', 
+              value: formatPrice(parseFloat(overview?.average_order_value) || 0), 
+              growth: 0,
+              icon: <svg className="w-6 h-6 text-cinematic-dark" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+            },
+            { 
+              label: 'Pending Orders', 
+              value: overview?.pending_orders || 0, 
+              growth: 0,
+              icon: <svg className="w-6 h-6 text-cinematic-dark" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            },
+          ].map((stat, i) => (
+            <Motion.div 
+              key={i}
+              initial={{ y: 20 }}
+              animate={{ y: 0 }}
+              transition={{ delay: i * 0.1 }}
+              className="relative p-6 rounded-3xl bg-white border border-zinc-200 group hover:border-cinematic-dark/30 hover:shadow-lg transition-all overflow-hidden"
             >
-              <option value="7">Last 7 Days</option>
-              <option value="30">Last 30 Days</option>
-              <option value="90">Last 90 Days</option>
-            </select>
-          </div>
-
-          {viewsLoading ? (
-            <div className="text-center py-12">
-              <div className="loading-spinner-md"></div>
-              <p className="loading-text">Loading views...</p>
-            </div>
-          ) : viewAnalytics ? (
-            <div className="space-y-6">
-              {/* Views Summary */}
-              <div className="grid-2">
-                <div className="stat-card-indigo">
-                  <p className="stat-label-sm mb-1">Total Views (All Time)</p>
-                  <p className="stat-value">{viewAnalytics.totalViews?.toLocaleString() || 0}</p>
+              <div className="absolute inset-0 bg-gradient-to-br from-cinematic-light/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+              <div className="relative z-10">
+                <div className="flex justify-between items-start mb-4">
+                  <div className="w-12 h-12 rounded-2xl bg-zinc-50 flex items-center justify-center text-xl shadow-sm border border-zinc-100">
+                    {stat.icon}
+                  </div>
                 </div>
-                <div className="stat-card-blue">
-                  <p className="stat-label-sm mb-1">Views (Last {viewPeriod} Days)</p>
-                  <p className="stat-value">{viewAnalytics.periodViews?.toLocaleString() || 0}</p>
-                </div>
-              </div>
-
-              {/* Most Viewed Products */}
-              <div>
-                <h3 className="heading-md mb-3">Most Viewed Products</h3>
-                {viewAnalytics.mostViewedProducts && viewAnalytics.mostViewedProducts.length > 0 ? (
-                  <div className="space-y-3">
-                    {viewAnalytics.mostViewedProducts.map((product, index) => (
-                      <div key={product.id} className="product-card-hover">
-                        <div className="rank-number-container">
-                          <span className="rank-number">#{index + 1}</span>
-                        </div>
-                        {product.image_urls && product.image_urls.length > 0 ? (
-                          <img
-                            src={product.image_urls[0]}
-                            alt={product.name}
-                            className="product-image-md"
-                          />
-                        ) : (
-                          <div className="product-image-placeholder-md">
-                            <svg className="icon-lg text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                              />
-                            </svg>
-                          </div>
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <h4 className="product-title">{product.name}</h4>
-                          <p className="product-price">{formatPrice(parseFloat(product.price))}</p>
-                        </div>
-                        <div className="text-right">
-                          <div className="flex flex-col items-end">
-                            <p className="view-count-primary">
-                              {parseInt(product.period_views || 0).toLocaleString()} views
-                            </p>
-                            <p className="view-count-secondary">
-                              {parseInt(product.total_views || 0).toLocaleString()} total
-                            </p>
-                          </div>
-                          {product.quantity_available !== undefined && (
-                            <p className="stock-info">
-                              {product.quantity_available} in stock
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    ))}
+                <p className="text-zinc-500 text-xs font-bold uppercase tracking-widest mb-1">{stat.label}</p>
+                <h2 className="text-3xl font-black tracking-tighter text-zinc-900 mb-2">{stat.value}</h2>
+                {stat.growth ? (
+                  <div className={`text-sm font-bold flex items-center gap-1 ${stat.growth >= 0 ? 'text-cinematic-dark' : 'text-red-500'}`}>
+                    {stat.growth >= 0 ? '↗' : '↘'} {Math.abs(stat.growth).toFixed(1)}% 
+                    <span className="text-zinc-400 font-medium ml-1">vs last month</span>
                   </div>
                 ) : (
-                  <div className="empty-state-bg">
-                    <svg className="empty-state-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                    <p className="empty-state-text">No product views yet</p>
-                  </div>
+                  <div className="text-sm font-bold text-transparent select-none">-</div>
                 )}
               </div>
-            </div>
-          ) : (
-            <div className="empty-state">
-              <p>Unable to load view analytics</p>
-            </div>
-          )}
+            </Motion.div>
+          ))}
         </div>
 
-        <div className="grid-2-lg mb-8">
-          {/* Top Selling Products */}
-          <div className="card">
-            <h2 className="section-header-mb-4">Top Selling Products</h2>
+        {/* ORDER STATUS BREAKDOWN */}
+        <div className="p-8 rounded-[32px] bg-white border border-zinc-200 shadow-sm">
+          <h3 className="text-xl font-bold tracking-tight text-zinc-900 mb-6">Order Status Breakdown</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { label: 'Pending', count: overview?.pending_orders || 0, color: 'text-yellow-600', bg: 'bg-yellow-50', border: 'border-yellow-200' },
+              { label: 'Processing', count: overview?.processing_orders || 0, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200' },
+              { label: 'Shipped', count: overview?.shipped_orders || 0, color: 'text-purple-600', bg: 'bg-purple-50', border: 'border-purple-200' },
+              { label: 'Delivered', count: overview?.delivered_orders || 0, color: 'text-cinematic-dark', bg: 'bg-cinematic-dark/10', border: 'border-cinematic-dark/20' },
+            ].map((status, i) => (
+              <div key={i} className={`p-6 rounded-2xl border ${status.border} ${status.bg} flex flex-col items-center justify-center text-center`}>
+                <span className={`text-4xl font-black ${status.color} mb-2`}>{status.count}</span>
+                <span className={`text-sm font-bold uppercase tracking-widest ${status.color} opacity-80`}>{status.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* CHARTS (Pure CSS/Tailwind replacements) */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Revenue Chart - Last 30 Days */}
+          <div className="p-8 rounded-[32px] bg-white border border-zinc-200 shadow-sm">
+            <h3 className="text-xl font-bold tracking-tight text-zinc-900 mb-8">Daily Revenue (Last 30 Days)</h3>
+            <div className="h-[250px] flex items-end gap-1 sm:gap-2 relative">
+              <div className="absolute inset-0 flex flex-col justify-between pointer-events-none opacity-50">
+                {[...Array(4)].map((_, i) => <div key={i} className="w-full border-t border-zinc-100" />)}
+              </div>
+              
+              {revenue_by_day?.length > 0 ? revenue_by_day.map((day, i) => {
+                const val = parseFloat(day.revenue) || 0;
+                const heightPct = Math.max((val / maxRevenue) * 100, 2);
+                return (
+                  <div key={i} className="flex-1 flex justify-center group relative h-full items-end">
+                    <div className="absolute -top-10 opacity-0 group-hover:opacity-100 bg-zinc-900 text-white text-xs font-bold px-2 py-1 rounded transition-opacity z-10">
+                      {formatPrice(val)}
+                    </div>
+                    <Motion.div 
+                      initial={{ height: 0 }}
+                      animate={{ height: `${heightPct}%` }}
+                      transition={{ duration: 1, delay: i * 0.02 }}
+                      className="w-full bg-cinematic-dark rounded-t-sm opacity-80 group-hover:opacity-100 transition-all"
+                    />
+                  </div>
+                );
+              }) : (
+                <div className="w-full h-full flex items-center justify-center text-zinc-400 font-medium">No revenue data</div>
+              )}
+            </div>
+            {/* Chart Summary Stats */}
+            {revenue_by_day?.length > 0 && (
+              <div className="grid grid-cols-3 gap-4 pt-6 mt-6 border-t border-zinc-100 text-center">
+                <div>
+                  <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1">Total</p>
+                  <p className="text-lg font-black text-zinc-900">{formatPrice(revenueData.reduce((a, b) => a + b, 0))}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1">Orders</p>
+                  <p className="text-lg font-black text-zinc-900">{ordersData.reduce((a, b) => a + b, 0)}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1">Daily Avg</p>
+                  <p className="text-lg font-black text-zinc-900">{formatPrice(revenueData.reduce((a, b) => a + b, 0) / revenueData.length)}</p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Product Views Analytics */}
+          <div className="p-8 rounded-[32px] bg-white border border-zinc-200 shadow-sm flex flex-col">
+            <div className="flex items-center justify-between mb-8">
+              <h3 className="text-xl font-bold tracking-tight text-zinc-900">Product Views</h3>
+              <select
+                value={viewPeriod}
+                onChange={(e) => setViewPeriod(e.target.value)}
+                className="px-4 py-2 bg-zinc-50 border border-zinc-200 rounded-full text-sm font-bold text-zinc-700 outline-none focus:border-cinematic-dark"
+              >
+                <option value="7">Last 7 Days</option>
+                <option value="30">Last 30 Days</option>
+                <option value="90">Last 90 Days</option>
+              </select>
+            </div>
+
+            {viewsLoading && !viewAnalytics ? (
+              <div className="flex-1 flex items-center justify-center">
+                <div className="w-8 h-8 border-4 border-cinematic-dark border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            ) : viewAnalytics ? (
+              <div className="flex-1 flex flex-col space-y-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-4 rounded-2xl bg-zinc-50 border border-zinc-100 text-center">
+                    <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1">All Time</p>
+                    <p className="text-2xl font-black text-cinematic-dark">{viewAnalytics.totalViews?.toLocaleString() || 0}</p>
+                  </div>
+                  <div className="p-4 rounded-2xl bg-zinc-50 border border-zinc-100 text-center">
+                    <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1">Last {viewPeriod} Days</p>
+                    <p className="text-2xl font-black text-cinematic-dark">{viewAnalytics.periodViews?.toLocaleString() || 0}</p>
+                  </div>
+                </div>
+
+                <div className="flex-1">
+                  <h4 className="text-sm font-bold text-zinc-900 uppercase tracking-widest mb-4">Most Viewed Products</h4>
+                  {viewAnalytics.mostViewedProducts?.length > 0 ? (
+                    <div className="space-y-3">
+                      {viewAnalytics.mostViewedProducts.slice(0, 4).map((product, index) => (
+                        <div key={product.id} className="flex items-center gap-4 p-3 rounded-2xl hover:bg-zinc-50 transition-colors border border-transparent hover:border-zinc-200">
+                          <div className="w-8 h-8 flex items-center justify-center rounded-full bg-cinematic-dark text-white font-bold text-xs">
+                            #{index + 1}
+                          </div>
+                          {product.image_urls && product.image_urls.length > 0 ? (
+                            <img src={product.image_urls[0]} alt={product.name} className="w-12 h-12 rounded-xl object-cover" />
+                          ) : (
+                            <div className="w-12 h-12 rounded-xl bg-zinc-100 flex items-center justify-center text-zinc-400">?</div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <h5 className="font-bold text-zinc-900 truncate">{product.name}</h5>
+                            <p className="text-sm text-cinematic-dark font-medium">{formatPrice(parseFloat(product.price))}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-black text-zinc-900">{parseInt(product.period_views || 0).toLocaleString()}</p>
+                            <p className="text-xs font-bold text-zinc-500 uppercase">Views</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="py-8 text-center text-zinc-400 font-bold uppercase tracking-widest text-sm">No views yet</div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="flex-1 flex items-center justify-center text-zinc-400">Failed to load view data</div>
+            )}
+          </div>
+        </div>
+
+        {/* LISTS: Top Selling & Low Stock */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="p-8 rounded-[32px] bg-white border border-zinc-200 shadow-sm">
+            <h3 className="text-xl font-bold tracking-tight text-zinc-900 mb-6">Top Selling Products</h3>
             {top_products && top_products.length > 0 ? (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {top_products.slice(0, 5).map((product) => (
-                  <div key={product.id} className="product-list-item">
+                  <div key={product.id} className="flex items-center gap-4 p-3 rounded-2xl hover:bg-zinc-50 transition-colors border border-transparent hover:border-zinc-200">
                     {product.image_urls && product.image_urls.length > 0 ? (
-                      <img
-                        src={product.image_urls[0]}
-                        alt={product.name}
-                        className="product-image-md"
-                      />
+                      <img src={product.image_urls[0]} alt={product.name} className="w-14 h-14 rounded-xl object-cover" />
                     ) : (
-                      <div className="product-image-placeholder-md">
-                        <svg className="icon-lg text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                          />
-                        </svg>
-                      </div>
+                      <div className="w-14 h-14 rounded-xl bg-zinc-100 flex items-center justify-center text-zinc-400">?</div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <h3 className="product-title">{product.name}</h3>
-                      <p className="product-price">{formatPrice(parseFloat(product.price))}</p>
+                      <h4 className="font-bold text-zinc-900 truncate">{product.name}</h4>
+                      <p className="text-sm text-cinematic-dark font-medium">{formatPrice(parseFloat(product.price))}</p>
                     </div>
                     <div className="text-right">
-                      <p className="product-stats-primary">{product.units_sold || 0} sold</p>
-                      <p className="product-revenue">{formatPrice(parseFloat(product.revenue) || 0)}</p>
+                      <p className="font-black text-zinc-900">{product.units_sold || 0} <span className="text-xs font-bold text-zinc-500 uppercase ml-1">Sold</span></p>
+                      <p className="text-sm text-cinematic-dark font-bold">{formatPrice(parseFloat(product.revenue) || 0)}</p>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="empty-state">No sales data yet</div>
+              <div className="py-12 text-center text-zinc-400 font-bold uppercase tracking-widest text-sm">No sales data yet</div>
             )}
           </div>
 
-          {/* Low Stock Alert */}
-          <div className="card">
-            <h2 className="section-header-mb-4">Low Stock Alert</h2>
+          <div className="p-8 rounded-[32px] bg-white border border-zinc-200 shadow-sm">
+            <h3 className="text-xl font-bold tracking-tight text-zinc-900 mb-6">Low Stock Alert</h3>
             {low_stock_products && low_stock_products.length > 0 ? (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {low_stock_products.map((product) => (
-                  <div key={product.id} className="product-list-item">
+                  <div key={product.id} className="flex items-center gap-4 p-3 rounded-2xl bg-red-50/50 hover:bg-red-50 transition-colors border border-red-100">
                     {product.image_urls && product.image_urls.length > 0 ? (
-                      <img
-                        src={product.image_urls[0]}
-                        alt={product.name}
-                        className="product-image-md"
-                      />
+                      <img src={product.image_urls[0]} alt={product.name} className="w-14 h-14 rounded-xl object-cover" />
                     ) : (
-                      <div className="product-image-placeholder-md">
-                        <svg className="icon-lg text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                          />
-                        </svg>
-                      </div>
+                      <div className="w-14 h-14 rounded-xl bg-zinc-100 flex items-center justify-center text-zinc-400">?</div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <h3 className="product-title">{product.name}</h3>
-                      <p className="product-price">{formatPrice(parseFloat(product.price))}</p>
+                      <h4 className="font-bold text-zinc-900 truncate">{product.name}</h4>
+                      <p className="text-sm text-zinc-500 font-medium">{formatPrice(parseFloat(product.price))}</p>
                     </div>
                     <div className="text-right">
-                      <span
-                        className={`badge-stock ${
-                          product.quantity_available === 0
-                            ? 'badge-stock-empty'
-                            : 'badge-stock-low'
-                        }`}
-                      >
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border ${
+                        product.quantity_available === 0 
+                          ? 'bg-red-500/10 text-red-600 border-red-500/20' 
+                          : 'bg-orange-500/10 text-orange-600 border-orange-500/20'
+                      }`}>
                         {product.quantity_available} left
                       </span>
                     </div>
@@ -551,71 +391,79 @@ export default function SellerAnalytics() {
                 ))}
               </div>
             ) : (
-              <div className="empty-state">All products are well stocked</div>
+              <div className="py-12 text-center text-zinc-400 font-bold uppercase tracking-widest text-sm">All products are well stocked</div>
             )}
           </div>
         </div>
 
-        {/* Recent Orders */}
-        <div className="card">
-          <div className="flex-between mb-4">
-            <h2 className="section-header">Recent Orders</h2>
-            <Link to="/seller/orders" className="link-primary">
-              View All Orders →
+        {/* RECENT ORDERS TABLE */}
+        <div className="rounded-[32px] bg-white border border-zinc-200 shadow-sm overflow-hidden">
+          <div className="p-8 border-b border-zinc-100 flex items-center justify-between">
+            <h3 className="text-2xl font-bold tracking-tight text-zinc-900">Recent Orders</h3>
+            <Link to="/seller/orders" className="text-cinematic-dark text-sm font-bold uppercase tracking-widest hover:text-cinematic-dark/80 transition-colors">
+              View All
             </Link>
           </div>
-          {recent_orders && recent_orders.length > 0 ? (
-            <div className="table-container">
-              <table className="table">
-                <thead>
-                  <tr className="table-header-row-alt">
-                    <th className="table-header-cell-alt">
-                      Order ID
-                    </th>
-                    <th className="table-header-cell-alt">
-                      Customer
-                    </th>
-                    <th className="table-header-cell-alt">
-                      Amount
-                    </th>
-                    <th className="table-header-cell-alt">
-                      Status
-                    </th>
-                    <th className="table-header-cell-alt">
-                      Date
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="table-body-alt">
-                  {recent_orders.map((order) => (
-                    <tr key={order.id} className="table-row">
-                      <td className="table-cell-compact-bold">
+          
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-base whitespace-nowrap">
+              <thead className="bg-zinc-50 border-b border-zinc-100">
+                <tr>
+                  <th className="px-8 py-5 text-zinc-500 font-bold uppercase tracking-widest text-sm">Order No.</th>
+                  <th className="px-8 py-5 text-zinc-500 font-bold uppercase tracking-widest text-sm">Customer</th>
+                  <th className="px-8 py-5 text-zinc-500 font-bold uppercase tracking-widest text-sm">Amount</th>
+                  <th className="px-8 py-5 text-zinc-500 font-bold uppercase tracking-widest text-sm">Status</th>
+                  <th className="px-8 py-5 text-zinc-500 font-bold uppercase tracking-widest text-sm">Date</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-100">
+                {recent_orders && recent_orders.length > 0 ? recent_orders.map((order, i) => {
+                  const statusMap = {
+                    'pending_payment': 'Pending',
+                    'payment_confirmed': 'Completed',
+                    'processing': 'In Progress',
+                    'shipped': 'In Progress',
+                    'delivered': 'Completed',
+                    'cancelled': 'Canceled',
+                  };
+                  const displayStatus = statusMap[order.status] || order.status;
+                  
+                  return (
+                    <tr key={order.id || i} className="hover:bg-zinc-50 transition-colors group cursor-pointer">
+                      <td className="px-8 py-6 text-zinc-400 font-mono text-sm">
                         #{order.order_number}
                       </td>
-                      <td className="table-cell-compact">
-                        {order.first_name} {order.last_name}
+                      <td className="px-8 py-6">
+                        <div className="font-bold text-zinc-900 group-hover:text-cinematic-dark transition-colors">
+                          {order.first_name} {order.last_name}
+                        </div>
                       </td>
-                      <td className="table-cell-compact">
-                        {formatPrice(parseFloat(order.seller_amount))}
+                      <td className="px-8 py-6 font-bold text-zinc-900">
+                        {formatPrice(order.total_amount || order.seller_amount)}
                       </td>
-                      <td className="table-cell-compact">
-                        <span className={`badge ${getStatusBadgeColor(order.status)}`}>
-                          {order.status}
+                      <td className="px-8 py-6">
+                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border ${getStatusStyle(displayStatus)}`}>
+                          {displayStatus}
                         </span>
                       </td>
-                      <td className="table-cell-compact-muted">
-                        {new Date(order.created_at).toLocaleDateString()}
+                      <td className="px-8 py-6 text-zinc-500 font-medium">
+                        {formatDate(order.created_at)}
                       </td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="empty-state">No orders yet</div>
-          )}
+                  );
+                }) : (
+                  <tr>
+                    <td colSpan="5" className="px-8 py-16 text-center text-zinc-400 font-bold tracking-widest uppercase">
+                      No orders yet
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
+
       </div>
-    </div>
+    </CinematicDashboardLayout>
   );
 }
