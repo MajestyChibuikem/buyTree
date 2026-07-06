@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { productService, uploadService, aiService } from '../services/api';
 import CinematicDashboardLayout from '../layouts/CinematicDashboardLayout';
-import { motion as Motion, AnimatePresence } from 'framer-motion';
+import { motion as Motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import heic2any from 'heic2any';
 
 const CATEGORIES = [
@@ -14,6 +14,23 @@ const CATEGORIES = [
 const EMPTY_FORM = {
   name: '', description: '', price: '', quantity_available: '',
   category: '', images: [],
+};
+
+// --- Reusable Scroll Reveal Component ---
+const FadeInScroll = ({ children, className }) => {
+  const ref = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ['start 95%', 'start 65%']
+  });
+  const opacity = useTransform(scrollYProgress, [0, 1], [0, 1]);
+  const y = useTransform(scrollYProgress, [0, 1], [40, 0]);
+
+  return (
+    <Motion.div ref={ref} style={{ opacity, y, willChange: 'transform, opacity' }} className={className}>
+      {children}
+    </Motion.div>
+  );
 };
 
 export default function SellerProducts() {
@@ -212,114 +229,103 @@ export default function SellerProducts() {
 
   return (
     <CinematicDashboardLayout>
-      <div className="space-y-12">
+      <div className="max-w-7xl mx-auto pb-32 overflow-hidden px-4 md:px-0">
         
-        {/* HEADER */}
-        <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        {/* HUGE HERO */}
+        <div className="pt-12 pb-24 md:pb-32 border-b border-zinc-200 flex flex-col md:flex-row md:items-end justify-between gap-8">
           <div>
-            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-cinematic-dark mb-2">
-              Products
-            </h1>
-            <p className="text-zinc-500 text-lg font-medium">
-              Manage your store's inventory and listings.
-            </p>
-          </div>
-          <div>
-            <button
-              onClick={openCreateForm}
-              className="px-8 py-3 rounded-full bg-cinematic-dark text-white font-bold hover:bg-cinematic-dark/90 transition-all shadow-md hover:shadow-lg flex items-center gap-2"
+            <Motion.p 
+              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}
+              className="text-zinc-500 font-bold tracking-[0.2em] uppercase text-sm mb-6"
             >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              Add Product
-            </button>
+              Inventory Management
+            </Motion.p>
+            <Motion.h1 
+              initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, delay: 0.1 }}
+              className="text-[64px] sm:text-[96px] md:text-[140px] font-black tracking-tighter leading-[0.9] text-cinematic-dark break-words"
+            >
+              Products
+            </Motion.h1>
           </div>
-        </header>
+          <Motion.button 
+             initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
+             onClick={openCreateForm}
+             className="px-8 py-4 bg-cinematic-dark text-white font-bold tracking-widest uppercase text-xs hover:bg-cinematic-dark/90 transition-colors shadow-lg"
+          >
+             + Add Product
+          </Motion.button>
+        </div>
 
-        {/* PRODUCT GRID */}
-        {loading ? (
-          <div className="h-[40vh] flex items-center justify-center">
-            <div className="w-12 h-12 border-4 border-cinematic-dark border-t-transparent rounded-full animate-spin"></div>
-          </div>
-        ) : products.length === 0 ? (
-          <div className="py-32 text-center rounded-[32px] bg-white border border-zinc-200 shadow-sm">
-            <div className="w-20 h-20 mx-auto rounded-full bg-zinc-50 flex items-center justify-center mb-6 border border-zinc-100">
-              <svg className="w-10 h-10 text-zinc-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-              </svg>
+        {/* PRODUCT GRID (Editorial Catalog) */}
+        <FadeInScroll className="py-24">
+          {loading ? (
+            <div className="h-[40vh] flex items-center justify-center">
+              <div className="w-10 h-10 border-4 border-cinematic-dark border-t-transparent rounded-full animate-spin"></div>
             </div>
-            <h3 className="text-2xl font-bold tracking-tight text-zinc-900 mb-2">No products yet</h3>
-            <p className="text-zinc-500">Click "Add Product" to create your first listing.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {products.map((product, i) => (
-              <Motion.div 
-                initial={{ y: 20 }}
-                animate={{ y: 0 }}
-                transition={{ delay: i * 0.05 }}
-                key={product.id} 
-                className="group relative bg-white rounded-3xl overflow-hidden border border-zinc-200 hover:border-cinematic-dark/30 hover:shadow-lg transition-all cursor-pointer flex flex-col h-[380px]"
-              >
-                {/* Image Background */}
-                <div className="relative h-1/2 w-full overflow-hidden bg-zinc-100">
-                  {product.image_urls?.[0] ? (
-                    <img 
-                      src={product.image_urls[0]} 
-                      alt={product.name} 
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                       <svg className="w-12 h-12 text-zinc-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                       </svg>
-                    </div>
-                  )}
-                  {/* Status Badge */}
-                  <div className="absolute top-4 left-4">
-                     <span className={`text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider border shadow-sm ${
-                       product.is_active ? 'bg-white text-cinematic-dark border-cinematic-dark/20' : 'bg-white/90 text-zinc-500 border-zinc-200'
+          ) : products.length === 0 ? (
+            <div className="py-32 text-center">
+              <h3 className="text-3xl font-black tracking-tight text-zinc-300 mb-4">Your catalog is empty</h3>
+              <p className="text-zinc-500 font-medium">Click "Add Product" to create your first listing.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-x-12 lg:gap-y-24">
+              {products.map((product, i) => (
+                <div key={product.id} className="group flex flex-col gap-6 relative">
+                  
+                  {/* Status Tag */}
+                  <div className="absolute top-4 left-4 z-10 pointer-events-none">
+                     <span className={`text-[10px] px-3 py-1 font-bold uppercase tracking-widest border ${
+                       product.is_active ? 'bg-white text-cinematic-dark border-transparent' : 'bg-zinc-900 text-white border-transparent'
                      }`}>
                        {product.is_active ? 'Active' : 'Inactive'}
                      </span>
                   </div>
+
+                  {/* Image Container */}
+                  <div className="aspect-[4/5] bg-zinc-100 overflow-hidden relative border border-zinc-200">
+                    {product.image_urls?.[0] ? (
+                      <img 
+                        src={product.image_urls[0]} 
+                        alt={product.name} 
+                        className="w-full h-full object-cover group-hover:scale-105 transition-all duration-700"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                         <span className="text-zinc-400 font-bold uppercase tracking-widest text-xs">No Image</span>
+                      </div>
+                    )}
+                    
+                    {/* Hover Overlay with Actions */}
+                    <div className="absolute inset-0 bg-zinc-900/40 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-4 transition-all duration-300">
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); openEditForm(product); }}
+                        className="px-6 py-3 bg-white text-zinc-900 font-bold uppercase tracking-widest text-[10px] hover:bg-cinematic-dark hover:text-white transition-colors"
+                      >
+                        Edit
+                      </button>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); handleDelete(product.id); }}
+                        className="px-6 py-3 bg-red-600 text-white font-bold uppercase tracking-widest text-[10px] hover:bg-red-700 transition-colors"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Content Details */}
+                  <div className="flex flex-col">
+                    <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-[0.2em] mb-2">{product.category}</p>
+                    <h3 className="font-bold text-xl text-zinc-900 tracking-tight leading-snug group-hover:text-cinematic-dark transition-colors">{product.name}</h3>
+                    <div className="flex justify-between items-end mt-4 border-t-2 border-zinc-900 pt-4">
+                      <p className="text-2xl font-black text-zinc-900">{formatPrice(product.price)}</p>
+                      <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest">Qty: {product.quantity_available}</p>
+                    </div>
+                  </div>
                 </div>
-                
-                {/* Content */}
-                <div className="p-6 flex-1 flex flex-col justify-between bg-white relative z-10">
-                  <div>
-                    <p className="text-zinc-400 text-xs font-bold uppercase tracking-widest mb-1">{product.category}</p>
-                    <h3 className="font-extrabold text-xl text-zinc-900 tracking-tight mb-2 truncate group-hover:text-cinematic-dark transition-colors">{product.name}</h3>
-                  </div>
-                  <div className="flex items-end justify-between mt-auto">
-                    <span className="text-2xl font-black text-cinematic-dark">
-                      {formatPrice(product.price)}
-                    </span>
-                    <span className="text-zinc-500 text-xs font-medium">Qty: {product.quantity_available}</span>
-                  </div>
-                  
-                  {/* Hover Actions */}
-                  <div className="absolute top-6 right-6 flex flex-col gap-2 opacity-0 translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 z-20">
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); openEditForm(product); }}
-                      className="w-10 h-10 rounded-full bg-white shadow-md border border-zinc-100 flex items-center justify-center text-zinc-600 hover:bg-cinematic-dark hover:text-white transition-colors"
-                    >
-                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                    </button>
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); handleDelete(product.id); }}
-                      className="w-10 h-10 rounded-full bg-white shadow-md border border-zinc-100 flex items-center justify-center text-red-500 hover:bg-red-500 hover:text-white transition-colors"
-                    >
-                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                    </button>
-                  </div>
-                </div>
-              </Motion.div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
+        </FadeInScroll>
       </div>
 
       {/* Cinematic Modal for Create/Edit */}
@@ -331,7 +337,7 @@ export default function SellerProducts() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-zinc-900/40 backdrop-blur-sm"
+              className="fixed inset-0 bg-zinc-900/60 backdrop-blur-md"
               onClick={() => setShowForm(false)}
             />
 
@@ -340,33 +346,36 @@ export default function SellerProducts() {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-2xl bg-white border border-zinc-200 rounded-[32px] shadow-2xl overflow-hidden"
+              className="relative w-full max-w-3xl bg-white shadow-2xl overflow-hidden rounded-none"
             >
-              <div className="px-8 py-6 border-b border-zinc-100 flex items-center justify-between bg-zinc-50">
-                <h2 className="text-2xl font-bold text-cinematic-dark tracking-tight">
-                  {editingProduct ? 'Edit Product' : 'Add New Product'}
-                </h2>
+              <div className="px-12 py-8 border-b-2 border-zinc-900 flex items-end justify-between bg-white">
+                <div>
+                  <p className="text-zinc-500 text-xs font-bold uppercase tracking-[0.2em] mb-2">Product Editor</p>
+                  <h2 className="text-4xl font-black text-cinematic-dark tracking-tight">
+                    {editingProduct ? 'Edit Listing' : 'New Listing'}
+                  </h2>
+                </div>
                 <button 
                   onClick={() => setShowForm(false)} 
-                  className="w-10 h-10 rounded-full bg-white border border-zinc-200 hover:bg-zinc-50 flex items-center justify-center text-zinc-500 hover:text-zinc-900 transition-colors shadow-sm"
+                  className="w-12 h-12 border border-zinc-200 hover:bg-zinc-100 flex items-center justify-center text-zinc-900 transition-colors"
                 >
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
               </div>
 
-              <form onSubmit={handleSubmit} className="px-8 py-8 space-y-6 max-h-[70vh] overflow-y-auto">
+              <form onSubmit={handleSubmit} className="px-12 py-12 space-y-10 max-h-[70vh] overflow-y-auto">
                 {/* Product Name */}
                 <div>
-                  <label className="block text-zinc-500 text-sm font-bold tracking-widest uppercase mb-2">Product Name *</label>
+                  <label className="block text-zinc-500 text-xs font-bold tracking-[0.2em] uppercase mb-4">Product Name</label>
                   <input
                     type="text"
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
-                    placeholder="e.g. Leather Jacket"
-                    className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-zinc-900 focus:outline-none focus:border-cinematic-dark focus:ring-1 focus:ring-cinematic-dark transition-all shadow-sm"
+                    placeholder="Enter product title..."
+                    className="w-full bg-transparent border-b-2 border-zinc-300 px-0 py-4 text-3xl font-bold text-zinc-900 focus:outline-none focus:border-cinematic-dark transition-all placeholder:text-zinc-300"
                     required
                   />
                 </div>
@@ -374,23 +383,23 @@ export default function SellerProducts() {
                 {/* AI Category Suggestion */}
                 <AnimatePresence>
                   {aiCatLoading && (
-                    <Motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="flex items-center gap-2 text-zinc-500 text-sm font-medium">
+                    <Motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="flex items-center gap-2 text-zinc-500 text-xs font-bold uppercase tracking-widest mt-2">
                       <span className="w-4 h-4 border-2 border-zinc-200 border-t-cinematic-dark rounded-full animate-spin" />
-                      Analyzing name for category...
+                      Analyzing...
                     </Motion.div>
                   )}
                   {aiCatSuggestion && (
-                    <Motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="flex items-center justify-between bg-cinematic-dark/5 border border-cinematic-dark/10 rounded-xl p-3">
-                      <div className="flex items-center gap-2">
-                        <span className="text-cinematic-dark">✦</span>
-                        <span className="text-zinc-700 text-sm font-medium">AI Suggests: <strong className="text-cinematic-dark">{aiCatSuggestion.category}</strong></span>
+                    <Motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="flex items-center justify-between border-t border-b border-zinc-100 py-4 mt-4">
+                      <div className="flex items-center gap-3">
+                        <span className="text-cinematic-dark text-xl">✦</span>
+                        <span className="text-zinc-600 text-sm font-bold tracking-wide">AI Classification: <strong className="text-cinematic-dark font-black">{aiCatSuggestion.category}</strong></span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <button type="button" onClick={acceptCategorySuggestion} className="px-3 py-1 bg-cinematic-dark text-white text-xs font-bold rounded-lg hover:bg-cinematic-dark/90 transition-colors shadow-sm">
+                      <div className="flex items-center gap-4">
+                        <button type="button" onClick={acceptCategorySuggestion} className="px-4 py-2 border-2 border-cinematic-dark text-cinematic-dark text-xs font-bold uppercase tracking-widest hover:bg-cinematic-dark hover:text-white transition-colors">
                           Apply
                         </button>
-                        <button type="button" onClick={() => setAiCatSuggestion(null)} className="text-zinc-400 hover:text-zinc-600 p-1">
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                        <button type="button" onClick={() => setAiCatSuggestion(null)} className="text-zinc-400 hover:text-zinc-900 text-xs font-bold uppercase tracking-widest">
+                          Dismiss
                         </button>
                       </div>
                     </Motion.div>
@@ -398,30 +407,30 @@ export default function SellerProducts() {
                 </AnimatePresence>
 
                 {/* Category & Price Grid */}
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-2 gap-12">
                   <div>
-                    <label className="block text-zinc-500 text-sm font-bold tracking-widest uppercase mb-2">Category *</label>
+                    <label className="block text-zinc-500 text-xs font-bold tracking-[0.2em] uppercase mb-4">Category</label>
                     <select
                       name="category"
                       value={formData.category}
                       onChange={handleChange}
-                      className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-zinc-900 focus:outline-none focus:border-cinematic-dark focus:ring-1 focus:ring-cinematic-dark transition-all shadow-sm"
+                      className="w-full bg-transparent border-b-2 border-zinc-300 px-0 py-4 text-xl font-bold text-zinc-900 focus:outline-none focus:border-cinematic-dark transition-all appearance-none cursor-pointer"
                       required
                     >
-                      <option value="">Select category</option>
+                      <option value="" disabled>Select a category</option>
                       {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-zinc-500 text-sm font-bold tracking-widest uppercase mb-2">Price (₦) *</label>
+                    <label className="block text-zinc-500 text-xs font-bold tracking-[0.2em] uppercase mb-4">Price (₦)</label>
                     <input
                       type="number"
                       name="price"
                       value={formData.price}
                       onChange={handleChange}
-                      placeholder="4000"
+                      placeholder="0.00"
                       min="0"
-                      className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-zinc-900 focus:outline-none focus:border-cinematic-dark focus:ring-1 focus:ring-cinematic-dark transition-all shadow-sm"
+                      className="w-full bg-transparent border-b-2 border-zinc-300 px-0 py-4 text-xl font-bold text-zinc-900 focus:outline-none focus:border-cinematic-dark transition-all"
                       required
                     />
                   </div>
@@ -429,13 +438,13 @@ export default function SellerProducts() {
 
                 {/* Description */}
                 <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="block text-zinc-500 text-sm font-bold tracking-widest uppercase">Description</label>
+                  <div className="flex items-end justify-between mb-4">
+                    <label className="block text-zinc-500 text-xs font-bold tracking-[0.2em] uppercase">Description</label>
                     <button
                       type="button"
                       onClick={handleGenerateDescription}
                       disabled={aiDescLoading}
-                      className="flex items-center gap-2 text-xs font-bold text-cinematic-dark hover:text-cinematic-dark/80 disabled:opacity-50 transition-colors uppercase tracking-widest"
+                      className="flex items-center gap-2 text-xs font-bold text-cinematic-dark hover:text-cinematic-dark/80 disabled:opacity-50 transition-colors uppercase tracking-[0.2em]"
                     >
                       {aiDescLoading ? (
                         <span className="w-3 h-3 border-2 border-cinematic-dark border-t-transparent rounded-full animate-spin inline-block" />
@@ -450,79 +459,82 @@ export default function SellerProducts() {
                     value={formData.description}
                     onChange={handleChange}
                     rows={4}
-                    placeholder="Describe your product..."
-                    className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-zinc-900 focus:outline-none focus:border-cinematic-dark focus:ring-1 focus:ring-cinematic-dark transition-all shadow-sm resize-none"
+                    placeholder="Provide a compelling description of your product..."
+                    className="w-full bg-zinc-50 border border-zinc-200 p-6 text-zinc-900 text-lg leading-relaxed focus:outline-none focus:border-cinematic-dark transition-all resize-none font-medium"
                   />
                 </div>
 
-                {/* Images */}
-                <div>
-                  <label className="block text-zinc-500 text-sm font-bold tracking-widest uppercase mb-2">Images</label>
-                  <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-zinc-200 hover:border-cinematic-dark/50 rounded-2xl p-8 cursor-pointer transition-colors text-zinc-400 hover:text-zinc-600 bg-zinc-50">
-                    {uploadingImages ? (
-                      <span className="w-8 h-8 border-2 border-zinc-200 border-t-cinematic-dark rounded-full animate-spin" />
-                    ) : (
-                      <>
-                        <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                        </svg>
-                        <span className="text-sm font-bold tracking-wide">Upload Images</span>
-                      </>
-                    )}
-                    <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" disabled={uploadingImages} />
-                  </label>
-
-                  {/* Image Previews */}
-                  {formData.images.length > 0 && (
-                    <div className="flex flex-wrap gap-4 mt-4">
-                      {formData.images.map((url, i) => (
-                        <div key={i} className="relative w-20 h-20 group">
-                          <img src={url} alt="" className="w-full h-full object-cover rounded-xl border border-zinc-200 shadow-sm" />
-                          <div className="absolute inset-0 bg-zinc-900/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center">
-                            <button
-                              type="button"
-                              onClick={() => removeImage(i)}
-                              className="w-8 h-8 bg-white hover:bg-red-50 text-red-500 rounded-full flex items-center justify-center transition-colors shadow-md"
-                            >
-                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                            </button>
-                          </div>
+                {/* Images & Quantity Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                  <div>
+                    <label className="block text-zinc-500 text-xs font-bold tracking-[0.2em] uppercase mb-4">Images</label>
+                    <label className="flex flex-col items-center justify-center border-2 border-dashed border-zinc-300 hover:border-cinematic-dark p-8 cursor-pointer transition-colors text-zinc-400 hover:text-zinc-900 bg-white min-h-[160px]">
+                      {uploadingImages ? (
+                        <div className="flex flex-col items-center gap-4">
+                           <span className="w-8 h-8 border-2 border-zinc-200 border-t-cinematic-dark rounded-full animate-spin" />
+                           <span className="text-xs font-bold uppercase tracking-widest text-cinematic-dark">Processing...</span>
                         </div>
-                      ))}
-                    </div>
-                  )}
+                      ) : (
+                        <>
+                          <span className="text-3xl mb-2">+</span>
+                          <span className="text-[10px] font-bold tracking-[0.2em] uppercase">Upload Photos</span>
+                          <span className="text-xs mt-2 opacity-50">HEIC/JPG/PNG</span>
+                        </>
+                      )}
+                      <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" disabled={uploadingImages} />
+                    </label>
+                  </div>
+                  
+                  <div>
+                     <label className="block text-zinc-500 text-xs font-bold tracking-[0.2em] uppercase mb-4">Stock Quantity</label>
+                     <input
+                       type="number"
+                       name="quantity_available"
+                       value={formData.quantity_available}
+                       onChange={handleChange}
+                       placeholder="Enter amount"
+                       min="0"
+                       className="w-full bg-transparent border-b-2 border-zinc-300 px-0 py-4 text-3xl font-black text-zinc-900 focus:outline-none focus:border-cinematic-dark transition-all"
+                     />
+                  </div>
                 </div>
-                
-                {/* Quantity */}
-                <div>
-                   <label className="block text-zinc-500 text-sm font-bold tracking-widest uppercase mb-2">Quantity Available</label>
-                   <input
-                     type="number"
-                     name="quantity_available"
-                     value={formData.quantity_available}
-                     onChange={handleChange}
-                     placeholder="10"
-                     min="0"
-                     className="w-1/3 bg-white border border-zinc-200 rounded-xl px-4 py-3 text-zinc-900 focus:outline-none focus:border-cinematic-dark focus:ring-1 focus:ring-cinematic-dark transition-all shadow-sm"
-                   />
-                </div>
+
+                {/* Image Previews */}
+                {formData.images.length > 0 && (
+                  <div className="flex flex-wrap gap-4 pt-4">
+                    {formData.images.map((url, i) => (
+                      <div key={i} className="relative w-24 h-24 group">
+                        <img src={url} alt="" className="w-full h-full object-cover border border-zinc-200" />
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <button
+                            type="button"
+                            onClick={() => removeImage(i)}
+                            className="text-white text-xs font-bold uppercase tracking-widest hover:text-red-400"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </form>
 
               {/* Submit Footer */}
-              <div className="px-8 py-6 border-t border-zinc-100 bg-zinc-50 flex justify-end gap-4">
+              <div className="px-12 py-8 border-t-2 border-zinc-900 bg-white flex justify-end gap-6">
                 <button
                   type="button"
                   onClick={() => setShowForm(false)}
-                  className="px-8 py-3 rounded-full border border-zinc-200 text-zinc-600 font-bold hover:bg-zinc-100 hover:text-zinc-900 transition-colors shadow-sm"
+                  className="px-8 py-4 text-zinc-500 font-bold uppercase tracking-widest text-xs hover:text-zinc-900 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleSubmit}
                   disabled={submitting}
-                  className="px-8 py-3 rounded-full bg-cinematic-dark text-white font-bold hover:bg-cinematic-dark/90 transition-all shadow-md disabled:opacity-50"
+                  className="px-8 py-4 bg-cinematic-dark text-white font-bold uppercase tracking-widest text-xs hover:bg-cinematic-dark/90 transition-colors disabled:opacity-50"
                 >
-                  {submitting ? 'Saving...' : editingProduct ? 'Save Changes' : 'Create Product'}
+                  {submitting ? 'Saving...' : editingProduct ? 'Save Changes' : 'Publish Product'}
                 </button>
               </div>
             </Motion.div>

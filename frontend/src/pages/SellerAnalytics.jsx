@@ -278,7 +278,7 @@ export default function SellerAnalytics() {
                             {index + 1}
                           </div>
                           {product.image_urls && product.image_urls.length > 0 ? (
-                            <img src={product.image_urls[0]} alt={product.name} className="w-16 h-16 object-cover bg-zinc-100 grayscale group-hover:grayscale-0 transition-all" />
+                            <img src={product.image_urls[0]} alt={product.name} className="w-16 h-16 object-cover bg-zinc-100 group-hover:scale-105 transition-all" />
                           ) : (
                             <div className="w-16 h-16 bg-zinc-100 flex items-center justify-center text-zinc-400 font-bold">?</div>
                           )}
