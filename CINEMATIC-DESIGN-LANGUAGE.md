@@ -602,3 +602,5 @@ This design language is color-agnostic. To adapt:
 ---
 
 *Generated from the BuyTree landing page (PureVisualsTemplate.jsx) — a cinematic, editorial homepage built with React + Framer Motion + Lenis + Tailwind CSS.*
+
+this is just to check if the codelayers extension is working or will work cause its just been quiet

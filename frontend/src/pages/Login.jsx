@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { sellerService } from '../services/api';
+import CinematicAuthLayout from '../layouts/CinematicAuthLayout';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -44,27 +45,20 @@ export default function Login() {
     const result = await login(formData.email, formData.password);
 
     if (result.success) {
-      // Get redirect parameter or determine default based on user role
       const redirectParam = searchParams.get('redirect');
 
-      // Wait a bit for user data to be available
       setTimeout(() => {
         const user = JSON.parse(localStorage.getItem('user') || '{}');
 
         if (shopSlug) {
-          // If logged in from shop, redirect to shop homepage
           navigate(`/shop/${shopSlug}`);
         } else if (redirectParam) {
-          // Use redirect parameter if provided
           navigate(redirectParam);
         } else if (user.role === 'admin') {
-          // Admins go to admin dashboard
           navigate('/admin/dashboard');
         } else if (user.role === 'seller') {
-          // Sellers go to dashboard
           navigate('/seller/dashboard');
         } else {
-          // Buyers have no default page, stay on current page or go to orders
           navigate('/orders');
         }
       }, 100);
@@ -76,58 +70,55 @@ export default function Login() {
   };
 
   return (
-    <div className="auth-container">
-      <div className="auth-form-wrapper">
-        <div>
-          {shop ? (
-            // Shop-branded login
-            <div className="text-center mb-6">
-              {shop.shop_logo_url && (
-                <img
-                  src={shop.shop_logo_url}
-                  alt={shop.shop_name}
-                  className="h-16 w-16 mx-auto mb-3 rounded-full object-cover"
-                />
-              )}
-              <h2 className="text-3xl font-extrabold text-gray-900 mb-2">
-                Sign in to {shop.shop_name}
-              </h2>
-              <p className="text-sm text-gray-500 mb-4">
-                Powered by <span className="font-semibold text-green-600">BuyTree</span>
-              </p>
-              <p className="auth-subtitle">
-                Or{' '}
-                <Link to={`/signup?shopSlug=${shopSlug}`} className="link-primary">
-                  create a new account
-                </Link>
-              </p>
-            </div>
-          ) : (
-            // Default BuyTree login
-            <>
-              <h2 className="auth-title">
-                Welcome back to BuyTree
-              </h2>
-              <p className="auth-subtitle">
-                Or{' '}
-                <Link to="/signup" className="link-primary">
-                  create a new account
-                </Link>
-              </p>
-            </>
-          )}
-        </div>
+    <CinematicAuthLayout 
+      title={shop ? `Welcome to ${shop.shop_name}.` : "Welcome Back."}
+      subtitle={shop ? "Sign in to continue your shopping." : "Access your dashboard to manage your white-label empire."}
+      imageSrc={shop?.shop_cover_url || "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80"}
+    >
+      <div>
+        {shop ? (
+          <div className="mb-8">
+            {shop.shop_logo_url && (
+              <img
+                src={shop.shop_logo_url}
+                alt={shop.shop_name}
+                className="h-16 w-16 mb-6 rounded-full object-cover border border-zinc-800"
+              />
+            )}
+            <h2 className="text-3xl font-semibold text-white mb-2">
+              Sign in
+            </h2>
+            <p className="text-zinc-400 mb-6">
+              New to {shop.shop_name}?{' '}
+              <Link to={`/signup?shopSlug=${shopSlug}`} className="text-cinematic-light hover:text-white transition-colors underline-offset-4 hover:underline">
+                Create an account
+              </Link>
+            </p>
+          </div>
+        ) : (
+          <div className="mb-10">
+            <h2 className="text-4xl font-bold text-white mb-3">
+              Log in
+            </h2>
+            <p className="text-zinc-400">
+              Don't have an account?{' '}
+              <Link to="/signup" className="text-cinematic-light hover:text-white transition-colors underline-offset-4 hover:underline">
+                Sign up
+              </Link>
+            </p>
+          </div>
+        )}
 
-        <form className="auth-form" onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="space-y-6">
           {error && (
-            <div className="alert-error">
-              <div className="alert-text">{error}</div>
+            <div className="bg-red-500/10 border border-red-500/50 rounded-lg p-4 text-red-400 text-sm">
+              {error}
             </div>
           )}
 
-          <div className="form-input-group">
+          <div className="space-y-4">
             <div>
-              <label htmlFor="email" className="sr-only">
+              <label htmlFor="email" className="block text-sm font-medium text-zinc-300 mb-1.5">
                 Email address
               </label>
               <input
@@ -136,52 +127,44 @@ export default function Login() {
                 type="email"
                 autoComplete="email"
                 required
-                className="form-input-top"
-                placeholder="Email address"
+                className="w-full px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-lg focus:ring-2 focus:ring-cinematic-light focus:border-transparent text-white placeholder-zinc-600 transition-all"
+                placeholder="Enter your email"
                 value={formData.email}
                 onChange={handleChange}
               />
             </div>
             <div>
-              <label htmlFor="password" className="sr-only">
-                Password
-              </label>
+              <div className="flex justify-between items-center mb-1.5">
+                <label htmlFor="password" className="block text-sm font-medium text-zinc-300">
+                  Password
+                </label>
+                <Link to="/forgot-password" className="text-sm text-cinematic-light hover:text-white transition-colors">
+                  Forgot password?
+                </Link>
+              </div>
               <input
                 id="password"
                 name="password"
                 type="password"
                 autoComplete="current-password"
                 required
-                className="form-input-bottom"
-                placeholder="Password"
+                className="w-full px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-lg focus:ring-2 focus:ring-cinematic-light focus:border-transparent text-white placeholder-zinc-600 transition-all"
+                placeholder="Enter your password"
                 value={formData.password}
                 onChange={handleChange}
               />
             </div>
           </div>
 
-          <div className="flex-between">
-            <div className="text-sm">
-              <Link
-                to="/forgot-password"
-                className="link-primary"
-              >
-                Forgot your password?
-              </Link>
-            </div>
-          </div>
-
-          <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="btn-primary-full"
-            >
-              {loading ? 'Signing in...' : 'Sign in'}
-            </button>
-          </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-3.5 px-4 bg-cinematic-light hover:bg-cinematic-light/90 text-zinc-950 font-bold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-cinematic-light focus:ring-offset-2 focus:ring-offset-zinc-950 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? 'Signing in...' : 'Sign in'}
+          </button>
         </form>
       </div>
-    </div>
+    </CinematicAuthLayout>
   );
 }

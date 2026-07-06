@@ -70,16 +70,12 @@ Think Shopify, not Amazon.
 #### Recent Orders
 ![Recent Orders](Buytree/analytics-recentOrders.png)
 
-## Getting Started
-
-Refer to [START_HERE.md](START_HERE.md) for setup instructions and [QUICKSTART.md](QUICKSTART.md) for a quick start guide.
-
 ## Documentation
 
-- [Build Plan](BUILD_PLAN.md)
+- [Technical Documentation](documentation/TechicalDoc.md)
+- [API Documentation](documentation/API_DOCUMENTATION.md)
 - [Testing Guide](TESTING_GUIDE.md)
 - [Setup Troubleshooting](SETUP_TROUBLESHOOTING.md)
-- [Seller Order Management](SELLER_ORDER_MANAGEMENT_COMPLETE.md)
 
 ## Tech Stack
 

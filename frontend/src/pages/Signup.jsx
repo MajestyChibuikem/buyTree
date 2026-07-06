@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { sellerService } from '../services/api';
+import CinematicAuthLayout from '../layouts/CinematicAuthLayout';
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -108,62 +109,56 @@ export default function Signup() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          {shop ? (
-            // Shop-branded signup
-            <div className="text-center">
-              {shop.shop_logo_url && (
-                <img
-                  src={shop.shop_logo_url}
-                  alt={shop.shop_name}
-                  className="h-16 w-16 mx-auto mb-3 rounded-full object-cover"
-                />
-              )}
-              <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
-                Create account for {shop.shop_name}
-              </h2>
-              <p className="mt-2 text-sm text-gray-500">
-                Join {shop.shop_name} customers
-              </p>
-              <p className="mt-1 text-xs text-gray-400">
-                Powered by <span className="font-semibold text-green-600">BuyTree</span>
-              </p>
-              <p className="mt-3 text-sm text-gray-600">
-                Already have an account?{' '}
-                <Link to={`/login?shopSlug=${shopSlug}`} className="font-medium text-green-600 hover:text-green-500">
-                  Sign in
-                </Link>
-              </p>
-            </div>
-          ) : (
-            // Default BuyTree signup
-            <>
-              <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-                Create your BuyTree account
-              </h2>
-              <p className="mt-2 text-center text-sm text-gray-600">
-                Already have an account?{' '}
-                <Link to="/login" className="font-medium text-green-600 hover:text-green-500">
-                  Sign in
-                </Link>
-              </p>
-            </>
-          )}
-        </div>
+    <CinematicAuthLayout 
+      title={shop ? `Join ${shop.shop_name}.` : "Start Selling."}
+      subtitle={shop ? "Create an account to track your orders and checkout faster." : "Create your white-label empire today. Free to start."}
+      imageSrc={shop?.shop_cover_url || "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80"}
+    >
+      <div>
+        {shop ? (
+          <div className="mb-8">
+            {shop.shop_logo_url && (
+              <img
+                src={shop.shop_logo_url}
+                alt={shop.shop_name}
+                className="h-16 w-16 mb-6 rounded-full object-cover border border-zinc-800"
+              />
+            )}
+            <h2 className="text-3xl font-semibold text-white mb-2">
+              Create account
+            </h2>
+            <p className="text-zinc-400 mb-6">
+              Already have an account?{' '}
+              <Link to={`/login?shopSlug=${shopSlug}`} className="text-cinematic-light hover:text-white transition-colors underline-offset-4 hover:underline">
+                Sign in
+              </Link>
+            </p>
+          </div>
+        ) : (
+          <div className="mb-10">
+            <h2 className="text-4xl font-bold text-white mb-3">
+              Sign up
+            </h2>
+            <p className="text-zinc-400">
+              Already have an account?{' '}
+              <Link to="/login" className="text-cinematic-light hover:text-white transition-colors underline-offset-4 hover:underline">
+                Log in
+              </Link>
+            </p>
+          </div>
+        )}
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="space-y-6">
           {error && (
-            <div className="rounded-md bg-red-50 p-4">
-              <div className="text-sm text-red-800">{error}</div>
+            <div className="bg-red-500/10 border border-red-500/50 rounded-lg p-4 text-red-400 text-sm">
+              {error}
             </div>
           )}
 
-          <div className="rounded-md shadow-sm space-y-4">
+          <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="firstName" className="block text-sm font-medium text-zinc-300 mb-1.5">
                   First Name
                 </label>
                 <input
@@ -171,14 +166,14 @@ export default function Signup() {
                   name="firstName"
                   type="text"
                   required
-                  className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
+                  className="w-full px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-lg focus:ring-2 focus:ring-cinematic-light focus:border-transparent text-white placeholder-zinc-600 transition-all"
                   placeholder="John"
                   value={formData.firstName}
                   onChange={handleChange}
                 />
               </div>
               <div>
-                <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="lastName" className="block text-sm font-medium text-zinc-300 mb-1.5">
                   Last Name
                 </label>
                 <input
@@ -186,7 +181,7 @@ export default function Signup() {
                   name="lastName"
                   type="text"
                   required
-                  className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
+                  className="w-full px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-lg focus:ring-2 focus:ring-cinematic-light focus:border-transparent text-white placeholder-zinc-600 transition-all"
                   placeholder="Doe"
                   value={formData.lastName}
                   onChange={handleChange}
@@ -195,7 +190,7 @@ export default function Signup() {
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="email" className="block text-sm font-medium text-zinc-300 mb-1.5">
                 Email Address
               </label>
               <input
@@ -204,15 +199,15 @@ export default function Signup() {
                 type="email"
                 autoComplete="email"
                 required
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
-                placeholder="your.email@gmail.com"
+                className="w-full px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-lg focus:ring-2 focus:ring-cinematic-light focus:border-transparent text-white placeholder-zinc-600 transition-all"
+                placeholder="your.email@example.com"
                 value={formData.email}
                 onChange={handleChange}
               />
             </div>
 
             <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="phone" className="block text-sm font-medium text-zinc-300 mb-1.5">
                 Phone Number
               </label>
               <input
@@ -221,7 +216,7 @@ export default function Signup() {
                 type="tel"
                 autoComplete="tel"
                 required
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
+                className="w-full px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-lg focus:ring-2 focus:ring-cinematic-light focus:border-transparent text-white placeholder-zinc-600 transition-all"
                 placeholder="08012345678"
                 value={formData.phone}
                 onChange={handleChange}
@@ -229,7 +224,7 @@ export default function Signup() {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="password" className="block text-sm font-medium text-zinc-300 mb-1.5">
                 Password
               </label>
               <input
@@ -238,7 +233,7 @@ export default function Signup() {
                 type="password"
                 autoComplete="new-password"
                 required
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
+                className="w-full px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-lg focus:ring-2 focus:ring-cinematic-light focus:border-transparent text-white placeholder-zinc-600 transition-all"
                 placeholder="Min. 8 characters"
                 value={formData.password}
                 onChange={handleChange}
@@ -246,7 +241,7 @@ export default function Signup() {
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-zinc-300 mb-1.5">
                 Confirm Password
               </label>
               <input
@@ -255,7 +250,7 @@ export default function Signup() {
                 type="password"
                 autoComplete="new-password"
                 required
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
+                className="w-full px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-lg focus:ring-2 focus:ring-cinematic-light focus:border-transparent text-white placeholder-zinc-600 transition-all"
                 placeholder="Re-enter password"
                 value={formData.confirmPassword}
                 onChange={handleChange}
@@ -263,17 +258,15 @@ export default function Signup() {
             </div>
           </div>
 
-          <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:bg-gray-400 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Creating account...' : 'Create account'}
-            </button>
-          </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-3.5 px-4 bg-cinematic-light hover:bg-cinematic-light/90 text-zinc-950 font-bold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-cinematic-light focus:ring-offset-2 focus:ring-offset-zinc-950 disabled:opacity-50 disabled:cursor-not-allowed mt-4"
+          >
+            {loading ? 'Creating account...' : 'Create account'}
+          </button>
         </form>
       </div>
-    </div>
+    </CinematicAuthLayout>
   );
 }
