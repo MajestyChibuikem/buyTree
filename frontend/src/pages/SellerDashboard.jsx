@@ -1,8 +1,25 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { orderService, analyticsService, sellerService } from '../services/api';
 import CinematicDashboardLayout from '../layouts/CinematicDashboardLayout';
-import { motion as Motion } from 'framer-motion';
+import { motion as Motion, useScroll, useTransform } from 'framer-motion';
+
+// --- Reusable Scroll Reveal Component ---
+const FadeInScroll = ({ children, className }) => {
+  const ref = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ['start 95%', 'start 65%']
+  });
+  const opacity = useTransform(scrollYProgress, [0, 1], [0, 1]);
+  const y = useTransform(scrollYProgress, [0, 1], [40, 0]);
+
+  return (
+    <Motion.div ref={ref} style={{ opacity, y, willChange: 'transform, opacity' }} className={className}>
+      {children}
+    </Motion.div>
+  );
+};
 
 export default function SellerDashboard() {
   const { user } = useAuth();
@@ -43,6 +60,40 @@ export default function SellerDashboard() {
     }).format(price).replace('NGN', '₦');
   };
 
+  const formatDate = (dateString) => {
+    return new Intl.DateTimeFormat('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric'
+    }).format(new Date(dateString));
+  };
+
+  if (loading) {
+    return (
+      <CinematicDashboardLayout>
+        <div className="h-[70vh] flex items-center justify-center">
+          <div className="w-12 h-12 border-4 border-cinematic-dark border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      </CinematicDashboardLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <CinematicDashboardLayout>
+        <div className="h-[70vh] flex flex-col items-center justify-center text-center">
+          <p className="text-zinc-900 font-extrabold text-3xl mb-4">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-8 py-4 rounded-full bg-cinematic-dark text-white font-bold tracking-widest uppercase text-sm"
+          >
+            Retry Connection
+          </button>
+        </div>
+      </CinematicDashboardLayout>
+    );
+  }
+
   const overview = analyticsData?.overview || {};
   const revenueByDay = analyticsData?.revenue_by_day || [];
   const recentOrders = analyticsData?.recent_orders || [];
@@ -60,135 +111,97 @@ export default function SellerDashboard() {
     revenueGrowth: overview.revenue_growth_percentage || 0,
   };
 
-  const getStatusStyle = (status) => {
-    switch (status.toLowerCase()) {
-      case 'completed': return 'bg-cinematic-dark/10 text-cinematic-dark border-cinematic-dark/20';
-      case 'pending': return 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20';
-      case 'in progress': return 'bg-blue-500/10 text-blue-600 border-blue-500/20';
-      case 'canceled': return 'bg-red-500/10 text-red-600 border-red-500/20';
-      default: return 'bg-zinc-100 text-zinc-500 border-zinc-200';
-    }
-  };
-
-  if (loading) {
-    return (
-      <CinematicDashboardLayout>
-        <div className="h-[70vh] flex items-center justify-center">
-          <div className="w-12 h-12 border-4 border-cinematic-dark border-t-transparent rounded-full animate-spin"></div>
-        </div>
-      </CinematicDashboardLayout>
-    );
-  }
-
   // Pure CSS Lightweight Chart Data prep
   const maxSales = Math.max(...salesData, 10);
   const maxRevenue = Math.max(...revenueData, 1000);
 
   return (
     <CinematicDashboardLayout>
-      <div className="space-y-12">
+      <div className="max-w-7xl mx-auto pb-32 overflow-hidden px-2 md:px-0">
         
-        {/* HEADER */}
-        <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-          <div>
-            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-cinematic-dark mb-2">
-              Dashboard
-            </h1>
-            <p className="text-zinc-500 text-lg font-medium">
-              Welcome back to your overview.
-            </p>
-          </div>
-          <div className="flex gap-4">
-            <button className="px-6 py-3 rounded-full bg-white border border-zinc-200 text-zinc-700 font-bold hover:bg-zinc-50 hover:text-cinematic-dark transition-colors shadow-sm">
-              Last 30 Days
-            </button>
-            <button className="px-6 py-3 rounded-full bg-cinematic-dark text-white font-bold hover:bg-cinematic-dark/90 transition-colors shadow-md">
-              Export Data
-            </button>
-          </div>
-        </header>
-
-        {/* STATS GRID */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[
-            { 
-              label: 'Total Revenue', 
-              value: formatPrice(stats.revenue), 
-              growth: stats.revenueGrowth, 
-              icon: <svg className="w-6 h-6 text-cinematic-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> 
-            },
-            { 
-              label: 'Total Sales', 
-              value: totalSales.toLocaleString(), 
-              growth: stats.orderGrowth, 
-              icon: <svg className="w-6 h-6 text-cinematic-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg> 
-            },
-            { 
-              label: 'Total Orders', 
-              value: stats.totalOrders.toLocaleString(), 
-              growth: stats.orderGrowth, 
-              icon: <svg className="w-6 h-6 text-cinematic-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg> 
-            },
-            { 
-              label: 'Monthly Profit', 
-              value: formatPrice(stats.profit), 
-              growth: stats.revenueGrowth, 
-              icon: <svg className="w-6 h-6 text-cinematic-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg> 
-            },
-          ].map((stat, i) => (
-            <Motion.div 
-              key={i}
-              initial={{ y: 20 }}
-              animate={{ y: 0 }}
-              transition={{ delay: i * 0.1 }}
-              className="relative p-6 rounded-3xl bg-white border border-zinc-200 group hover:border-cinematic-dark/30 hover:shadow-lg transition-all overflow-hidden"
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-cinematic-light/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-              
-              <div className="relative z-10">
-                <div className="flex justify-between items-start mb-4">
-                  <div className="w-12 h-12 rounded-2xl bg-zinc-50 flex items-center justify-center text-xl shadow-sm border border-zinc-100">
-                    {stat.icon}
-                  </div>
-                </div>
-                <p className="text-zinc-500 text-xs font-bold uppercase tracking-widest mb-1">{stat.label}</p>
-                <h2 className="text-3xl font-black tracking-tighter text-zinc-900 mb-2">{stat.value}</h2>
-                <div className={`text-sm font-bold flex items-center gap-1 ${stat.growth >= 0 ? 'text-cinematic-dark' : 'text-red-500'}`}>
-                  {stat.growth >= 0 ? '↗' : '↘'} {Math.abs(stat.growth).toFixed(1)}% 
-                  <span className="text-zinc-400 font-medium ml-1">vs last month</span>
-                </div>
-              </div>
-            </Motion.div>
-          ))}
+        {/* HUGE HERO: NET PROFIT */}
+        <div className="pt-12 pb-24 md:pb-32 border-b border-zinc-200">
+          <Motion.p 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+            className="text-zinc-500 font-bold tracking-[0.2em] uppercase text-sm mb-6"
+          >
+            {sellerProfile?.shop_name ? `${sellerProfile.shop_name} • ` : ''}Net Profit
+          </Motion.p>
+          <Motion.h1 
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
+            className="text-[64px] sm:text-[96px] md:text-[140px] font-black tracking-tighter leading-[0.9] text-cinematic-dark break-words"
+          >
+            {formatPrice(stats.profit)}
+          </Motion.h1>
+          <Motion.div 
+             initial={{ opacity: 0 }}
+             animate={{ opacity: 1 }}
+             transition={{ duration: 1, delay: 0.5 }}
+             className="mt-8 flex flex-col md:flex-row md:items-center gap-4 md:gap-8"
+          >
+             <div className="text-zinc-400 font-medium tracking-wide">
+               Your 95% estimated payout for the last 30 days.
+             </div>
+          </Motion.div>
         </div>
 
-        {/* CHARTS (Pure CSS/Tailwind Lightweight replacements) */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          
+        {/* SECONDARY STATS (Editorial 3-column split) */}
+        <FadeInScroll className="py-24 md:py-32 border-b border-zinc-200">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-16">
+             <div className="border-t-2 border-zinc-900 pt-8">
+                 <p className="text-zinc-500 font-bold tracking-[0.2em] uppercase text-xs mb-4">Gross Revenue</p>
+                 <p className="text-5xl font-black text-zinc-900">{formatPrice(stats.revenue)}</p>
+                 {stats.revenueGrowth !== 0 && (
+                   <p className={`mt-4 text-sm font-bold ${stats.revenueGrowth > 0 ? 'text-cinematic-dark' : 'text-red-500'}`}>
+                     {stats.revenueGrowth > 0 ? '↗' : '↘'} {Math.abs(stats.revenueGrowth).toFixed(1)}% vs last month
+                   </p>
+                 )}
+             </div>
+             <div className="border-t-2 border-zinc-900 pt-8">
+                 <p className="text-zinc-500 font-bold tracking-[0.2em] uppercase text-xs mb-4">Total Sales</p>
+                 <p className="text-5xl font-black text-zinc-900">{totalSales.toLocaleString()}</p>
+                 {stats.orderGrowth !== 0 && (
+                   <p className={`mt-4 text-sm font-bold ${stats.orderGrowth > 0 ? 'text-cinematic-dark' : 'text-red-500'}`}>
+                     {stats.orderGrowth > 0 ? '↗' : '↘'} {Math.abs(stats.orderGrowth).toFixed(1)}% vs last month
+                   </p>
+                 )}
+             </div>
+             <div className="border-t-2 border-zinc-900 pt-8">
+                 <p className="text-zinc-500 font-bold tracking-[0.2em] uppercase text-xs mb-4">Total Orders</p>
+                 <p className="text-5xl font-black text-zinc-900">{stats.totalOrders.toLocaleString()}</p>
+             </div>
+          </div>
+        </FadeInScroll>
+
+        {/* CHARTS (Editorial 2-column split, No Boxes) */}
+        <FadeInScroll className="grid grid-cols-1 lg:grid-cols-2 gap-24 py-24 md:py-32 border-b border-zinc-200">
           {/* Sales Bar Chart */}
-          <div className="p-8 rounded-[32px] bg-white border border-zinc-200 shadow-sm">
-            <h3 className="text-xl font-bold tracking-tight text-zinc-900 mb-8">Daily Sales Volume</h3>
-            <div className="h-[250px] flex items-end gap-2 sm:gap-4 relative">
+          <div>
+            <h2 className="text-4xl font-extrabold tracking-tight text-zinc-900 mb-16">Sales Volume</h2>
+            <div className="h-[300px] flex items-end gap-2 sm:gap-4 relative">
               {/* Y-axis grid lines */}
               <div className="absolute inset-0 flex flex-col justify-between pointer-events-none opacity-50">
-                {[...Array(4)].map((_, i) => <div key={i} className="w-full border-t border-zinc-100" />)}
+                {[...Array(4)].map((_, i) => <div key={i} className="w-full border-t border-zinc-200" />)}
               </div>
               
               {/* Bars */}
               {salesData.length > 0 ? salesData.map((val, i) => {
-                const heightPct = Math.max((val / maxSales) * 100, 5); // min 5% height
+                const heightPct = Math.max((val / maxSales) * 100, 2);
                 return (
-                  <div key={i} className="flex-1 flex justify-center group relative h-full items-end">
-                    {/* Tooltip */}
-                    <div className="absolute -top-10 opacity-0 group-hover:opacity-100 bg-zinc-900 text-white text-xs font-bold px-2 py-1 rounded transition-opacity">
+                  <div key={i} className="flex-1 flex justify-center group relative h-full items-end z-10">
+                    <div className="absolute -top-10 opacity-0 group-hover:opacity-100 bg-zinc-900 text-white text-xs font-bold px-2 py-1 rounded transition-opacity pointer-events-none">
                       {val}
                     </div>
-                    {/* Bar */}
                     <Motion.div 
                       initial={{ height: 0 }}
-                      animate={{ height: `${heightPct}%` }}
-                      transition={{ duration: 1, delay: i * 0.05 }}
-                      className="w-full max-w-[24px] bg-cinematic-dark rounded-t-lg shadow-sm group-hover:bg-cinematic-light transition-colors"
+                      whileInView={{ height: `${heightPct}%` }}
+                      viewport={{ once: true, margin: "-100px" }}
+                      transition={{ duration: 1, ease: [0.16, 1, 0.3, 1], delay: i * 0.05 }}
+                      className="w-full max-w-[32px] bg-zinc-900 group-hover:bg-cinematic-light transition-colors"
                     />
                   </div>
                 );
@@ -199,24 +212,23 @@ export default function SellerDashboard() {
           </div>
 
           {/* Revenue Waterfall (Pure CSS) */}
-          <div className="p-8 rounded-[32px] bg-white border border-zinc-200 shadow-sm">
-             <h3 className="text-xl font-bold tracking-tight text-zinc-900 mb-8">Revenue Waterfall</h3>
-             <div className="h-[250px] flex gap-1 sm:gap-2 relative">
+          <div>
+             <h2 className="text-4xl font-extrabold tracking-tight text-zinc-900 mb-16">Revenue Flow</h2>
+             <div className="h-[300px] flex gap-1 sm:gap-2 relative">
                 {revenueData.length > 0 ? revenueData.map((val, i) => {
                   const startPct = 100 - ((val / maxRevenue) * 100);
                   return (
                     <div key={i} className="flex-1 flex flex-col group relative h-full">
-                       {/* Tooltip */}
-                       <div className="absolute top-0 opacity-0 group-hover:opacity-100 bg-zinc-900 text-white text-xs font-bold px-2 py-1 rounded transition-opacity z-10 w-max transform -translate-x-1/2 left-1/2">
+                       <div className="absolute top-0 opacity-0 group-hover:opacity-100 bg-zinc-900 text-white text-xs font-bold px-2 py-1 rounded transition-opacity z-10 w-max transform -translate-x-1/2 left-1/2 pointer-events-none">
                           {formatPrice(val)}
                        </div>
                        <div style={{ height: `${startPct}%` }} className="w-full" />
-                       {/* Waterfall strip */}
                        <Motion.div 
                          initial={{ opacity: 0 }}
-                         animate={{ opacity: 1 }}
+                         whileInView={{ opacity: 1 }}
+                         viewport={{ once: true }}
                          transition={{ duration: 0.5, delay: i * 0.05 }}
-                         className="w-full flex-1 bg-gradient-to-b from-cinematic-dark via-cinematic-dark/30 to-transparent rounded-t-full"
+                         className="w-full flex-1 bg-gradient-to-b from-cinematic-dark via-cinematic-dark/30 to-transparent"
                        />
                     </div>
                   );
@@ -225,75 +237,88 @@ export default function SellerDashboard() {
                 )}
              </div>
           </div>
+        </FadeInScroll>
 
+        {/* STORE HEALTH (Seamless integration with theme color) */}
+        <div className="py-32 my-24 border-y border-zinc-200">
+          <FadeInScroll>
+             <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-24 gap-8">
+                <div>
+                  <h2 className="text-5xl sm:text-6xl font-black tracking-tight mb-4 text-cinematic-dark">Store Health</h2>
+                  <p className="text-zinc-500 text-xl font-light">Inventory and active product status.</p>
+                </div>
+             </div>
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
+                 <div>
+                    <p className="text-zinc-500 font-bold tracking-[0.2em] uppercase text-xs mb-6">Active Products</p>
+                    <p className="text-[100px] font-black text-zinc-900 leading-[0.9] tracking-tighter">{dashboardData?.active_products || 0}</p>
+                 </div>
+                 <div>
+                    <p className="text-zinc-500 font-bold tracking-[0.2em] uppercase text-xs mb-6">Low Stock Alerts</p>
+                    <p className={`text-[100px] font-black leading-[0.9] tracking-tighter ${dashboardData?.low_stock_items > 0 ? 'text-red-500' : 'text-cinematic-dark'}`}>
+                      {dashboardData?.low_stock_items || 0}
+                    </p>
+                 </div>
+             </div>
+          </FadeInScroll>
         </div>
 
-        {/* RECENT ORDERS TABLE */}
-        <div className="rounded-[32px] bg-white border border-zinc-200 shadow-sm overflow-hidden">
-          <div className="p-8 border-b border-zinc-100 flex items-center justify-between">
-            <h3 className="text-2xl font-bold tracking-tight text-zinc-900">Recent Orders</h3>
-            <button className="text-cinematic-dark text-sm font-bold uppercase tracking-widest hover:text-cinematic-dark/80 transition-colors">
-              View All
-            </button>
+        {/* RECENT ORDERS (Clean, Borderless Typography Layout) */}
+        <FadeInScroll className="py-24">
+          <div className="flex justify-between items-end mb-16">
+             <h2 className="text-5xl font-extrabold tracking-tight text-zinc-900">Recent Orders</h2>
           </div>
           
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-base whitespace-nowrap">
-              <thead className="bg-zinc-50 border-b border-zinc-100">
-                <tr>
-                  <th className="px-8 py-5 text-zinc-500 font-bold uppercase tracking-widest text-sm">Customer</th>
-                  <th className="px-8 py-5 text-zinc-500 font-bold uppercase tracking-widest text-sm">Date</th>
-                  <th className="px-8 py-5 text-zinc-500 font-bold uppercase tracking-widest text-sm">Amount</th>
-                  <th className="px-8 py-5 text-zinc-500 font-bold uppercase tracking-widest text-sm">Order No.</th>
-                  <th className="px-8 py-5 text-zinc-500 font-bold uppercase tracking-widest text-sm">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-100">
-                {recentOrders.length > 0 ? recentOrders.map((order, i) => {
+          <div className="w-full overflow-x-auto">
+            <div className="min-w-[800px]">
+              {/* Header */}
+              <div className="grid grid-cols-5 gap-6 border-t-2 border-zinc-900 py-6">
+                 <div className="text-zinc-500 font-bold tracking-[0.2em] uppercase text-xs">Order</div>
+                 <div className="text-zinc-500 font-bold tracking-[0.2em] uppercase text-xs">Customer</div>
+                 <div className="text-zinc-500 font-bold tracking-[0.2em] uppercase text-xs">Amount</div>
+                 <div className="text-zinc-500 font-bold tracking-[0.2em] uppercase text-xs">Status</div>
+                 <div className="text-zinc-500 font-bold tracking-[0.2em] uppercase text-xs text-right">Date</div>
+              </div>
+              
+              {/* Rows */}
+              <div className="flex flex-col">
+                {recentOrders && recentOrders.length > 0 ? recentOrders.map((order, i) => {
                   const statusMap = {
                     'pending_payment': 'Pending',
-                    'payment_confirmed': 'Completed',
-                    'processing': 'In Progress',
-                    'shipped': 'In Progress',
-                    'delivered': 'Completed',
+                    'payment_confirmed': 'Confirmed',
+                    'processing': 'Processing',
+                    'shipped': 'Shipped',
+                    'delivered': 'Delivered',
                     'cancelled': 'Canceled',
                   };
                   const displayStatus = statusMap[order.status] || order.status;
                   
                   return (
-                    <tr key={order.id || i} className="hover:bg-zinc-50 transition-colors group cursor-pointer">
-                      <td className="px-8 py-6">
-                        <div className="font-bold text-zinc-900 group-hover:text-cinematic-dark transition-colors">
-                          {order.first_name} {order.last_name}
-                        </div>
-                      </td>
-                      <td className="px-8 py-6 text-zinc-500 font-medium">
-                        {new Date(order.created_at).toLocaleDateString('en-GB')}
-                      </td>
-                      <td className="px-8 py-6 font-bold text-zinc-900">
-                        {formatPrice(order.total_amount)}
-                      </td>
-                      <td className="px-8 py-6 text-zinc-400 font-mono text-sm">
-                        {order.order_number}
-                      </td>
-                      <td className="px-8 py-6">
-                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border ${getStatusStyle(displayStatus)}`}>
+                    <div key={order.id || i} className="grid grid-cols-5 gap-6 py-6 border-t border-zinc-200 hover:bg-zinc-50/50 transition-colors group cursor-pointer">
+                      <div className="text-zinc-500 font-mono text-sm self-center">#{order.order_number}</div>
+                      <div className="font-bold text-zinc-900 self-center group-hover:text-cinematic-dark transition-colors">{order.first_name} {order.last_name}</div>
+                      <div className="font-black text-zinc-900 text-lg self-center">{formatPrice(order.total_amount || order.seller_amount)}</div>
+                      <div className="self-center">
+                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold border ${
+                          displayStatus === 'Delivered' ? 'border-cinematic-dark text-cinematic-dark bg-cinematic-dark/10' :
+                          displayStatus === 'Pending' ? 'border-yellow-500 text-yellow-600 bg-yellow-500/10' :
+                          'border-blue-500 text-blue-600 bg-blue-500/10'
+                        }`}>
                           {displayStatus}
                         </span>
-                      </td>
-                    </tr>
+                      </div>
+                      <div className="text-zinc-500 font-medium text-sm self-center text-right">{formatDate(order.created_at)}</div>
+                    </div>
                   );
                 }) : (
-                  <tr>
-                    <td colSpan="5" className="px-8 py-16 text-center text-zinc-400 font-bold tracking-widest uppercase">
-                      No orders yet
-                    </td>
-                  </tr>
+                  <div className="py-12 border-t border-zinc-200 text-zinc-400 font-bold uppercase tracking-widest text-sm text-center">
+                    No orders placed yet
+                  </div>
                 )}
-              </tbody>
-            </table>
+              </div>
+            </div>
           </div>
-        </div>
+        </FadeInScroll>
 
       </div>
     </CinematicDashboardLayout>

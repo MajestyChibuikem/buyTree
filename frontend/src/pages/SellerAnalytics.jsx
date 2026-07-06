@@ -1,13 +1,30 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { analyticsService } from '../services/api';
 import CinematicDashboardLayout from '../layouts/CinematicDashboardLayout';
-import { motion as Motion } from 'framer-motion';
+import { motion as Motion, useScroll, useTransform } from 'framer-motion';
+
+// --- Reusable Scroll Reveal Component ---
+const FadeInScroll = ({ children, className }) => {
+  const ref = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ['start 95%', 'start 65%']
+  });
+  const opacity = useTransform(scrollYProgress, [0, 1], [0, 1]);
+  const y = useTransform(scrollYProgress, [0, 1], [40, 0]);
+
+  return (
+    <Motion.div ref={ref} style={{ opacity, y, willChange: 'transform, opacity' }} className={className}>
+      {children}
+    </Motion.div>
+  );
+};
 
 export default function SellerAnalytics() {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
 
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -44,7 +61,6 @@ export default function SellerAnalytics() {
       setError('');
     } catch (err) {
       setError('Failed to load analytics');
-      console.error('Analytics error:', err);
     }
   };
 
@@ -70,22 +86,10 @@ export default function SellerAnalytics() {
 
   const formatDate = (dateString) => {
     return new Intl.DateTimeFormat('en-US', {
-      month: 'short',
+      month: 'long',
       day: 'numeric',
+      year: 'numeric'
     }).format(new Date(dateString));
-  };
-
-  const getStatusStyle = (status) => {
-    switch (status.toLowerCase()) {
-      case 'completed': 
-      case 'delivered': return 'bg-cinematic-dark/10 text-cinematic-dark border-cinematic-dark/20';
-      case 'pending': return 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20';
-      case 'in progress':
-      case 'processing': 
-      case 'shipped': return 'bg-blue-500/10 text-blue-600 border-blue-500/20';
-      case 'canceled': return 'bg-red-500/10 text-red-600 border-red-500/20';
-      default: return 'bg-zinc-100 text-zinc-500 border-zinc-200';
-    }
   };
 
   if (loading) {
@@ -102,12 +106,12 @@ export default function SellerAnalytics() {
     return (
       <CinematicDashboardLayout>
         <div className="h-[70vh] flex flex-col items-center justify-center text-center">
-          <p className="text-red-500 font-bold mb-4">{error}</p>
+          <p className="text-zinc-900 font-extrabold text-3xl mb-4">{error}</p>
           <button
             onClick={() => { setLoading(true); fetchAnalytics(); }}
-            className="px-6 py-2 rounded-full bg-cinematic-dark text-white font-bold"
+            className="px-8 py-4 rounded-full bg-cinematic-dark text-white font-bold tracking-widest uppercase text-sm"
           >
-            Retry
+            Retry Connection
           </button>
         </div>
       </CinematicDashboardLayout>
@@ -118,350 +122,296 @@ export default function SellerAnalytics() {
 
   // Chart data
   const revenueData = revenue_by_day ? revenue_by_day.map(d => parseFloat(d.revenue) || 0) : [];
-  const ordersData = revenue_by_day ? revenue_by_day.map(d => parseInt(d.orders_count) || 0) : [];
   const maxRevenue = Math.max(...revenueData, 1000);
-  const maxOrders = Math.max(...ordersData, 10);
 
   return (
     <CinematicDashboardLayout>
-      <div className="space-y-12">
-        {/* HEADER */}
-        <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-          <div>
-            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-cinematic-dark mb-2">
-              Analytics
-            </h1>
-            <p className="text-zinc-500 text-lg font-medium">
-              Track your sales performance and insights
-            </p>
-          </div>
-          <div className="flex gap-4">
-            <Link to="/seller/dashboard" className="px-6 py-3 rounded-full bg-white border border-zinc-200 text-zinc-700 font-bold hover:bg-zinc-50 hover:text-cinematic-dark transition-colors shadow-sm">
-              Dashboard
-            </Link>
-          </div>
-        </header>
-
-        {/* OVERVIEW STATS */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[
-            { 
-              label: 'Total Revenue', 
-              value: formatPrice(parseFloat(overview?.total_revenue) || 0), 
-              growth: overview?.revenue_growth_percentage,
-              icon: <svg className="w-6 h-6 text-cinematic-dark" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-            },
-            { 
-              label: 'Total Orders', 
-              value: overview?.total_orders || 0, 
-              growth: overview?.order_growth_percentage,
-              icon: <svg className="w-6 h-6 text-cinematic-dark" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
-            },
-            { 
-              label: 'Avg. Order Value', 
-              value: formatPrice(parseFloat(overview?.average_order_value) || 0), 
-              growth: 0,
-              icon: <svg className="w-6 h-6 text-cinematic-dark" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
-            },
-            { 
-              label: 'Pending Orders', 
-              value: overview?.pending_orders || 0, 
-              growth: 0,
-              icon: <svg className="w-6 h-6 text-cinematic-dark" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-            },
-          ].map((stat, i) => (
+      <div className="max-w-7xl mx-auto pb-32 overflow-hidden px-2 md:px-0">
+        
+        {/* HUGE HERO: TOTAL REVENUE */}
+        <div className="pt-12 pb-24 md:pb-32 border-b border-zinc-200">
+          <Motion.p 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+            className="text-zinc-500 font-bold tracking-[0.2em] uppercase text-sm mb-6"
+          >
+            Total Revenue
+          </Motion.p>
+          <Motion.h1 
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
+            className="text-[64px] sm:text-[96px] md:text-[140px] font-black tracking-tighter leading-[0.9] text-zinc-900 break-words"
+          >
+            {formatPrice(parseFloat(overview?.total_revenue) || 0)}
+          </Motion.h1>
+          {overview?.revenue_growth_percentage !== 0 && (
             <Motion.div 
-              key={i}
-              initial={{ y: 20 }}
-              animate={{ y: 0 }}
-              transition={{ delay: i * 0.1 }}
-              className="relative p-6 rounded-3xl bg-white border border-zinc-200 group hover:border-cinematic-dark/30 hover:shadow-lg transition-all overflow-hidden"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 1, delay: 0.5 }}
+              className="mt-8 flex items-center gap-3"
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-cinematic-light/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-              <div className="relative z-10">
-                <div className="flex justify-between items-start mb-4">
-                  <div className="w-12 h-12 rounded-2xl bg-zinc-50 flex items-center justify-center text-xl shadow-sm border border-zinc-100">
-                    {stat.icon}
-                  </div>
-                </div>
-                <p className="text-zinc-500 text-xs font-bold uppercase tracking-widest mb-1">{stat.label}</p>
-                <h2 className="text-3xl font-black tracking-tighter text-zinc-900 mb-2">{stat.value}</h2>
-                {stat.growth ? (
-                  <div className={`text-sm font-bold flex items-center gap-1 ${stat.growth >= 0 ? 'text-cinematic-dark' : 'text-red-500'}`}>
-                    {stat.growth >= 0 ? '↗' : '↘'} {Math.abs(stat.growth).toFixed(1)}% 
-                    <span className="text-zinc-400 font-medium ml-1">vs last month</span>
-                  </div>
-                ) : (
-                  <div className="text-sm font-bold text-transparent select-none">-</div>
-                )}
+              <div className={`px-4 py-2 rounded-full text-sm font-bold tracking-widest uppercase ${
+                overview?.revenue_growth_percentage > 0 ? 'bg-cinematic-dark/10 text-cinematic-dark' : 'bg-red-500/10 text-red-600'
+              }`}>
+                {overview?.revenue_growth_percentage > 0 ? '↗' : '↘'} {Math.abs(overview?.revenue_growth_percentage).toFixed(1)}%
               </div>
+              <span className="text-zinc-400 font-medium tracking-wide">vs last month</span>
             </Motion.div>
-          ))}
+          )}
         </div>
 
-        {/* ORDER STATUS BREAKDOWN */}
-        <div className="p-8 rounded-[32px] bg-white border border-zinc-200 shadow-sm">
-          <h3 className="text-xl font-bold tracking-tight text-zinc-900 mb-6">Order Status Breakdown</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[
-              { label: 'Pending', count: overview?.pending_orders || 0, color: 'text-yellow-600', bg: 'bg-yellow-50', border: 'border-yellow-200' },
-              { label: 'Processing', count: overview?.processing_orders || 0, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200' },
-              { label: 'Shipped', count: overview?.shipped_orders || 0, color: 'text-purple-600', bg: 'bg-purple-50', border: 'border-purple-200' },
-              { label: 'Delivered', count: overview?.delivered_orders || 0, color: 'text-cinematic-dark', bg: 'bg-cinematic-dark/10', border: 'border-cinematic-dark/20' },
-            ].map((status, i) => (
-              <div key={i} className={`p-6 rounded-2xl border ${status.border} ${status.bg} flex flex-col items-center justify-center text-center`}>
-                <span className={`text-4xl font-black ${status.color} mb-2`}>{status.count}</span>
-                <span className={`text-sm font-bold uppercase tracking-widest ${status.color} opacity-80`}>{status.label}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* CHARTS (Pure CSS/Tailwind replacements) */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Revenue Chart - Last 30 Days */}
-          <div className="p-8 rounded-[32px] bg-white border border-zinc-200 shadow-sm">
-            <h3 className="text-xl font-bold tracking-tight text-zinc-900 mb-8">Daily Revenue (Last 30 Days)</h3>
-            <div className="h-[250px] flex items-end gap-1 sm:gap-2 relative">
-              <div className="absolute inset-0 flex flex-col justify-between pointer-events-none opacity-50">
-                {[...Array(4)].map((_, i) => <div key={i} className="w-full border-t border-zinc-100" />)}
+        {/* REVENUE CHART & SECONDARY STATS (Editorial Split) */}
+        <FadeInScroll className="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24 py-24 md:py-32 border-b border-zinc-200">
+          {/* Left Col: Chart */}
+          <div className="lg:col-span-8">
+            <h2 className="text-4xl font-extrabold tracking-tight text-zinc-900 mb-16">Revenue Flow</h2>
+            <div className="h-[300px] flex items-end gap-1 sm:gap-2 relative">
+              {/* Subtle Grid Lines */}
+              <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
+                {[...Array(4)].map((_, i) => <div key={i} className="w-full border-t border-zinc-200" />)}
               </div>
               
               {revenue_by_day?.length > 0 ? revenue_by_day.map((day, i) => {
                 const val = parseFloat(day.revenue) || 0;
                 const heightPct = Math.max((val / maxRevenue) * 100, 2);
                 return (
-                  <div key={i} className="flex-1 flex justify-center group relative h-full items-end">
-                    <div className="absolute -top-10 opacity-0 group-hover:opacity-100 bg-zinc-900 text-white text-xs font-bold px-2 py-1 rounded transition-opacity z-10">
+                  <div key={i} className="flex-1 flex justify-center group relative h-full items-end z-10">
+                    <div className="absolute -top-10 opacity-0 group-hover:opacity-100 bg-zinc-900 text-white text-xs font-bold px-3 py-2 rounded transition-opacity">
                       {formatPrice(val)}
                     </div>
                     <Motion.div 
                       initial={{ height: 0 }}
-                      animate={{ height: `${heightPct}%` }}
-                      transition={{ duration: 1, delay: i * 0.02 }}
-                      className="w-full bg-cinematic-dark rounded-t-sm opacity-80 group-hover:opacity-100 transition-all"
+                      whileInView={{ height: `${heightPct}%` }}
+                      viewport={{ once: true, margin: "-100px" }}
+                      transition={{ duration: 1, ease: [0.16, 1, 0.3, 1], delay: i * 0.02 }}
+                      className="w-full bg-zinc-900 hover:bg-cinematic-dark transition-colors"
                     />
                   </div>
                 );
               }) : (
-                <div className="w-full h-full flex items-center justify-center text-zinc-400 font-medium">No revenue data</div>
+                <div className="w-full h-full flex items-center justify-center text-zinc-400 font-medium">No revenue data available</div>
               )}
             </div>
-            {/* Chart Summary Stats */}
+            {/* Chart legend / dates */}
             {revenue_by_day?.length > 0 && (
-              <div className="grid grid-cols-3 gap-4 pt-6 mt-6 border-t border-zinc-100 text-center">
-                <div>
-                  <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1">Total</p>
-                  <p className="text-lg font-black text-zinc-900">{formatPrice(revenueData.reduce((a, b) => a + b, 0))}</p>
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1">Orders</p>
-                  <p className="text-lg font-black text-zinc-900">{ordersData.reduce((a, b) => a + b, 0)}</p>
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1">Daily Avg</p>
-                  <p className="text-lg font-black text-zinc-900">{formatPrice(revenueData.reduce((a, b) => a + b, 0) / revenueData.length)}</p>
-                </div>
+              <div className="flex justify-between mt-4 text-xs font-bold text-zinc-400 uppercase tracking-widest">
+                <span>{formatDate(revenue_by_day[0].date)}</span>
+                <span>{formatDate(revenue_by_day[revenue_by_day.length - 1].date)}</span>
               </div>
             )}
           </div>
 
-          {/* Product Views Analytics */}
-          <div className="p-8 rounded-[32px] bg-white border border-zinc-200 shadow-sm flex flex-col">
-            <div className="flex items-center justify-between mb-8">
-              <h3 className="text-xl font-bold tracking-tight text-zinc-900">Product Views</h3>
-              <select
-                value={viewPeriod}
-                onChange={(e) => setViewPeriod(e.target.value)}
-                className="px-4 py-2 bg-zinc-50 border border-zinc-200 rounded-full text-sm font-bold text-zinc-700 outline-none focus:border-cinematic-dark"
-              >
-                <option value="7">Last 7 Days</option>
-                <option value="30">Last 30 Days</option>
-                <option value="90">Last 90 Days</option>
-              </select>
+          {/* Right Col: Secondary Stats */}
+          <div className="lg:col-span-4 flex flex-col">
+             <div className="flex-1 flex flex-col justify-between">
+                <div className="py-8 border-t border-zinc-200">
+                   <p className="text-zinc-500 font-bold tracking-[0.2em] uppercase text-xs mb-3">Total Orders</p>
+                   <p className="text-5xl font-black text-zinc-900">{overview?.total_orders || 0}</p>
+                </div>
+                <div className="py-8 border-t border-zinc-200">
+                   <p className="text-zinc-500 font-bold tracking-[0.2em] uppercase text-xs mb-3">Avg. Order Value</p>
+                   <p className="text-5xl font-black text-zinc-900">{formatPrice(parseFloat(overview?.average_order_value) || 0)}</p>
+                </div>
+                <div className="py-8 border-t border-zinc-200">
+                   <p className="text-zinc-500 font-bold tracking-[0.2em] uppercase text-xs mb-3">Pending Orders</p>
+                   <p className="text-5xl font-black text-cinematic-dark">{overview?.pending_orders || 0}</p>
+                </div>
+             </div>
+          </div>
+        </FadeInScroll>
+
+        {/* CATALOG INSIGHTS (Seamless integration with theme color) */}
+        <div className="py-32 my-24 border-y border-zinc-200">
+          <FadeInScroll>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-24 gap-8">
+              <div>
+                <h2 className="text-5xl sm:text-6xl font-black tracking-tight mb-4 text-cinematic-dark">Catalog Insights</h2>
+                <p className="text-zinc-500 text-xl font-light">Performance metrics for your products.</p>
+              </div>
+              <div className="relative">
+                <select
+                  value={viewPeriod}
+                  onChange={(e) => setViewPeriod(e.target.value)}
+                  className="appearance-none bg-transparent border-b-2 border-zinc-200 text-zinc-900 text-xl font-bold py-2 pr-8 outline-none focus:border-cinematic-dark transition-colors cursor-pointer"
+                >
+                  <option value="7">Last 7 Days</option>
+                  <option value="30">Last 30 Days</option>
+                  <option value="90">Last 90 Days</option>
+                </select>
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-500">▼</div>
+              </div>
             </div>
 
             {viewsLoading && !viewAnalytics ? (
-              <div className="flex-1 flex items-center justify-center">
-                <div className="w-8 h-8 border-4 border-cinematic-dark border-t-transparent rounded-full animate-spin"></div>
+              <div className="py-24 flex items-center justify-center">
+                <div className="w-10 h-10 border-4 border-cinematic-dark border-t-transparent rounded-full animate-spin"></div>
               </div>
             ) : viewAnalytics ? (
-              <div className="flex-1 flex flex-col space-y-6">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="p-4 rounded-2xl bg-zinc-50 border border-zinc-100 text-center">
-                    <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1">All Time</p>
-                    <p className="text-2xl font-black text-cinematic-dark">{viewAnalytics.totalViews?.toLocaleString() || 0}</p>
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24">
+                {/* Massive View Count */}
+                <div className="lg:col-span-5">
+                  <div className="mb-16">
+                    <p className="text-zinc-500 font-bold tracking-[0.2em] uppercase text-xs mb-6">Views (Last {viewPeriod} Days)</p>
+                    <p className="text-[80px] sm:text-[100px] font-black text-cinematic-dark leading-[0.9] tracking-tighter break-words">
+                      {viewAnalytics.periodViews?.toLocaleString() || 0}
+                    </p>
                   </div>
-                  <div className="p-4 rounded-2xl bg-zinc-50 border border-zinc-100 text-center">
-                    <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1">Last {viewPeriod} Days</p>
-                    <p className="text-2xl font-black text-cinematic-dark">{viewAnalytics.periodViews?.toLocaleString() || 0}</p>
+                  <div>
+                    <p className="text-zinc-500 font-bold tracking-[0.2em] uppercase text-xs mb-6">All Time Views</p>
+                    <p className="text-5xl font-black text-zinc-900">
+                      {viewAnalytics.totalViews?.toLocaleString() || 0}
+                    </p>
                   </div>
                 </div>
 
-                <div className="flex-1">
-                  <h4 className="text-sm font-bold text-zinc-900 uppercase tracking-widest mb-4">Most Viewed Products</h4>
+                {/* Most Viewed List (Premium UI) */}
+                <div className="lg:col-span-7">
+                  <h3 className="text-zinc-500 font-bold tracking-[0.2em] uppercase text-xs mb-8">Most Viewed Products</h3>
                   {viewAnalytics.mostViewedProducts?.length > 0 ? (
-                    <div className="space-y-3">
-                      {viewAnalytics.mostViewedProducts.slice(0, 4).map((product, index) => (
-                        <div key={product.id} className="flex items-center gap-4 p-3 rounded-2xl hover:bg-zinc-50 transition-colors border border-transparent hover:border-zinc-200">
-                          <div className="w-8 h-8 flex items-center justify-center rounded-full bg-cinematic-dark text-white font-bold text-xs">
-                            #{index + 1}
+                    <div className="flex flex-col">
+                      {viewAnalytics.mostViewedProducts.slice(0, 5).map((product, index) => (
+                        <div key={product.id} className="flex items-center gap-6 py-6 border-t border-zinc-200 group hover:bg-zinc-50/50 transition-colors -mx-4 px-4">
+                          <div className="text-zinc-400 font-black text-2xl w-8 group-hover:text-cinematic-dark transition-colors">
+                            {index + 1}
                           </div>
                           {product.image_urls && product.image_urls.length > 0 ? (
-                            <img src={product.image_urls[0]} alt={product.name} className="w-12 h-12 rounded-xl object-cover" />
+                            <img src={product.image_urls[0]} alt={product.name} className="w-16 h-16 object-cover bg-zinc-100 grayscale group-hover:grayscale-0 transition-all" />
                           ) : (
-                            <div className="w-12 h-12 rounded-xl bg-zinc-100 flex items-center justify-center text-zinc-400">?</div>
+                            <div className="w-16 h-16 bg-zinc-100 flex items-center justify-center text-zinc-400 font-bold">?</div>
                           )}
                           <div className="flex-1 min-w-0">
-                            <h5 className="font-bold text-zinc-900 truncate">{product.name}</h5>
-                            <p className="text-sm text-cinematic-dark font-medium">{formatPrice(parseFloat(product.price))}</p>
+                            <h4 className="text-xl font-bold text-zinc-900 truncate group-hover:text-cinematic-dark transition-colors">{product.name}</h4>
+                            <p className="text-zinc-500 font-medium mt-1">{formatPrice(parseFloat(product.price))}</p>
                           </div>
                           <div className="text-right">
-                            <p className="font-black text-zinc-900">{parseInt(product.period_views || 0).toLocaleString()}</p>
-                            <p className="text-xs font-bold text-zinc-500 uppercase">Views</p>
+                            <p className="text-2xl font-black text-zinc-900">{parseInt(product.period_views || 0).toLocaleString()}</p>
+                            <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest mt-1">Views</p>
                           </div>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <div className="py-8 text-center text-zinc-400 font-bold uppercase tracking-widest text-sm">No views yet</div>
+                    <div className="text-zinc-500 font-medium">No views recorded yet.</div>
                   )}
                 </div>
               </div>
-            ) : (
-              <div className="flex-1 flex items-center justify-center text-zinc-400">Failed to load view data</div>
-            )}
-          </div>
+            ) : null}
+          </FadeInScroll>
         </div>
 
-        {/* LISTS: Top Selling & Low Stock */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="p-8 rounded-[32px] bg-white border border-zinc-200 shadow-sm">
-            <h3 className="text-xl font-bold tracking-tight text-zinc-900 mb-6">Top Selling Products</h3>
+        {/* TOP SELLING & LOW STOCK (Editorial List Format) */}
+        <FadeInScroll className="grid grid-cols-1 lg:grid-cols-2 gap-24 py-24 border-b border-zinc-200">
+          <div>
+            <h3 className="text-4xl font-extrabold tracking-tight text-zinc-900 mb-12">Top Sellers</h3>
             {top_products && top_products.length > 0 ? (
-              <div className="space-y-3">
+              <div className="flex flex-col border-t border-zinc-900">
                 {top_products.slice(0, 5).map((product) => (
-                  <div key={product.id} className="flex items-center gap-4 p-3 rounded-2xl hover:bg-zinc-50 transition-colors border border-transparent hover:border-zinc-200">
-                    {product.image_urls && product.image_urls.length > 0 ? (
-                      <img src={product.image_urls[0]} alt={product.name} className="w-14 h-14 rounded-xl object-cover" />
-                    ) : (
-                      <div className="w-14 h-14 rounded-xl bg-zinc-100 flex items-center justify-center text-zinc-400">?</div>
-                    )}
+                  <div key={product.id} className="flex items-center gap-6 py-6 border-b border-zinc-200 group">
                     <div className="flex-1 min-w-0">
-                      <h4 className="font-bold text-zinc-900 truncate">{product.name}</h4>
-                      <p className="text-sm text-cinematic-dark font-medium">{formatPrice(parseFloat(product.price))}</p>
+                      <h4 className="text-xl font-bold text-zinc-900 truncate group-hover:text-cinematic-dark transition-colors">{product.name}</h4>
+                      <p className="text-zinc-500 font-medium mt-1">{formatPrice(parseFloat(product.price))}</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-black text-zinc-900">{product.units_sold || 0} <span className="text-xs font-bold text-zinc-500 uppercase ml-1">Sold</span></p>
-                      <p className="text-sm text-cinematic-dark font-bold">{formatPrice(parseFloat(product.revenue) || 0)}</p>
+                      <p className="text-2xl font-black text-zinc-900">{product.units_sold || 0} <span className="text-sm font-bold text-zinc-400 uppercase tracking-widest ml-1">Sold</span></p>
+                      <p className="text-sm text-cinematic-dark font-bold mt-1">{formatPrice(parseFloat(product.revenue) || 0)}</p>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="py-12 text-center text-zinc-400 font-bold uppercase tracking-widest text-sm">No sales data yet</div>
+              <div className="text-zinc-400 font-medium">No sales data yet.</div>
             )}
           </div>
 
-          <div className="p-8 rounded-[32px] bg-white border border-zinc-200 shadow-sm">
-            <h3 className="text-xl font-bold tracking-tight text-zinc-900 mb-6">Low Stock Alert</h3>
+          <div>
+            <h3 className="text-4xl font-extrabold tracking-tight text-zinc-900 mb-12">Low Stock Alerts</h3>
             {low_stock_products && low_stock_products.length > 0 ? (
-              <div className="space-y-3">
+              <div className="flex flex-col border-t border-zinc-900">
                 {low_stock_products.map((product) => (
-                  <div key={product.id} className="flex items-center gap-4 p-3 rounded-2xl bg-red-50/50 hover:bg-red-50 transition-colors border border-red-100">
-                    {product.image_urls && product.image_urls.length > 0 ? (
-                      <img src={product.image_urls[0]} alt={product.name} className="w-14 h-14 rounded-xl object-cover" />
-                    ) : (
-                      <div className="w-14 h-14 rounded-xl bg-zinc-100 flex items-center justify-center text-zinc-400">?</div>
-                    )}
+                  <div key={product.id} className="flex items-center gap-6 py-6 border-b border-zinc-200 group">
                     <div className="flex-1 min-w-0">
-                      <h4 className="font-bold text-zinc-900 truncate">{product.name}</h4>
-                      <p className="text-sm text-zinc-500 font-medium">{formatPrice(parseFloat(product.price))}</p>
+                      <h4 className="text-xl font-bold text-zinc-900 truncate">{product.name}</h4>
+                      <p className="text-zinc-500 font-medium mt-1">{formatPrice(parseFloat(product.price))}</p>
                     </div>
                     <div className="text-right">
-                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border ${
-                        product.quantity_available === 0 
-                          ? 'bg-red-500/10 text-red-600 border-red-500/20' 
-                          : 'bg-orange-500/10 text-orange-600 border-orange-500/20'
-                      }`}>
-                        {product.quantity_available} left
-                      </span>
+                       <p className={`text-2xl font-black ${product.quantity_available === 0 ? 'text-red-500' : 'text-orange-500'}`}>
+                         {product.quantity_available} <span className="text-sm font-bold opacity-50 uppercase tracking-widest ml-1">Left</span>
+                       </p>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="py-12 text-center text-zinc-400 font-bold uppercase tracking-widest text-sm">All products are well stocked</div>
+              <div className="text-zinc-400 font-medium">All products are well stocked.</div>
             )}
           </div>
-        </div>
+        </FadeInScroll>
 
-        {/* RECENT ORDERS TABLE */}
-        <div className="rounded-[32px] bg-white border border-zinc-200 shadow-sm overflow-hidden">
-          <div className="p-8 border-b border-zinc-100 flex items-center justify-between">
-            <h3 className="text-2xl font-bold tracking-tight text-zinc-900">Recent Orders</h3>
-            <Link to="/seller/orders" className="text-cinematic-dark text-sm font-bold uppercase tracking-widest hover:text-cinematic-dark/80 transition-colors">
-              View All
-            </Link>
+        {/* RECENT ORDERS (Clean, Borderless Typography Layout) */}
+        <FadeInScroll className="py-24">
+          <div className="flex justify-between items-end mb-16">
+             <h2 className="text-5xl font-extrabold tracking-tight text-zinc-900">Recent Orders</h2>
+             <button onClick={() => navigate('/seller/orders')} className="hidden md:block text-cinematic-dark font-bold tracking-widest uppercase text-sm hover:opacity-70 transition-opacity">
+               View Complete History →
+             </button>
           </div>
           
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-base whitespace-nowrap">
-              <thead className="bg-zinc-50 border-b border-zinc-100">
-                <tr>
-                  <th className="px-8 py-5 text-zinc-500 font-bold uppercase tracking-widest text-sm">Order No.</th>
-                  <th className="px-8 py-5 text-zinc-500 font-bold uppercase tracking-widest text-sm">Customer</th>
-                  <th className="px-8 py-5 text-zinc-500 font-bold uppercase tracking-widest text-sm">Amount</th>
-                  <th className="px-8 py-5 text-zinc-500 font-bold uppercase tracking-widest text-sm">Status</th>
-                  <th className="px-8 py-5 text-zinc-500 font-bold uppercase tracking-widest text-sm">Date</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-100">
+          <div className="w-full overflow-x-auto">
+            <div className="min-w-[800px]">
+              {/* Header */}
+              <div className="grid grid-cols-5 gap-6 border-t-2 border-zinc-900 py-6">
+                 <div className="text-zinc-500 font-bold tracking-[0.2em] uppercase text-xs">Order</div>
+                 <div className="text-zinc-500 font-bold tracking-[0.2em] uppercase text-xs">Customer</div>
+                 <div className="text-zinc-500 font-bold tracking-[0.2em] uppercase text-xs">Amount</div>
+                 <div className="text-zinc-500 font-bold tracking-[0.2em] uppercase text-xs">Status</div>
+                 <div className="text-zinc-500 font-bold tracking-[0.2em] uppercase text-xs text-right">Date</div>
+              </div>
+              
+              {/* Rows */}
+              <div className="flex flex-col">
                 {recent_orders && recent_orders.length > 0 ? recent_orders.map((order, i) => {
                   const statusMap = {
                     'pending_payment': 'Pending',
-                    'payment_confirmed': 'Completed',
-                    'processing': 'In Progress',
-                    'shipped': 'In Progress',
-                    'delivered': 'Completed',
+                    'payment_confirmed': 'Confirmed',
+                    'processing': 'Processing',
+                    'shipped': 'Shipped',
+                    'delivered': 'Delivered',
                     'cancelled': 'Canceled',
                   };
                   const displayStatus = statusMap[order.status] || order.status;
                   
                   return (
-                    <tr key={order.id || i} className="hover:bg-zinc-50 transition-colors group cursor-pointer">
-                      <td className="px-8 py-6 text-zinc-400 font-mono text-sm">
-                        #{order.order_number}
-                      </td>
-                      <td className="px-8 py-6">
-                        <div className="font-bold text-zinc-900 group-hover:text-cinematic-dark transition-colors">
-                          {order.first_name} {order.last_name}
-                        </div>
-                      </td>
-                      <td className="px-8 py-6 font-bold text-zinc-900">
-                        {formatPrice(order.total_amount || order.seller_amount)}
-                      </td>
-                      <td className="px-8 py-6">
-                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border ${getStatusStyle(displayStatus)}`}>
+                    <div key={order.id || i} className="grid grid-cols-5 gap-6 py-6 border-t border-zinc-200 hover:bg-zinc-50/50 transition-colors group cursor-pointer" onClick={() => navigate(`/seller/orders`)}>
+                      <div className="text-zinc-500 font-mono text-sm self-center">#{order.order_number}</div>
+                      <div className="font-bold text-zinc-900 self-center group-hover:text-cinematic-dark transition-colors">{order.first_name} {order.last_name}</div>
+                      <div className="font-black text-zinc-900 text-lg self-center">{formatPrice(order.total_amount || order.seller_amount)}</div>
+                      <div className="self-center">
+                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold border ${
+                          displayStatus === 'Delivered' ? 'border-cinematic-dark text-cinematic-dark bg-cinematic-dark/10' :
+                          displayStatus === 'Pending' ? 'border-yellow-500 text-yellow-600 bg-yellow-500/10' :
+                          'border-blue-500 text-blue-600 bg-blue-500/10'
+                        }`}>
                           {displayStatus}
                         </span>
-                      </td>
-                      <td className="px-8 py-6 text-zinc-500 font-medium">
-                        {formatDate(order.created_at)}
-                      </td>
-                    </tr>
+                      </div>
+                      <div className="text-zinc-500 font-medium text-sm self-center text-right">{formatDate(order.created_at)}</div>
+                    </div>
                   );
                 }) : (
-                  <tr>
-                    <td colSpan="5" className="px-8 py-16 text-center text-zinc-400 font-bold tracking-widest uppercase">
-                      No orders yet
-                    </td>
-                  </tr>
+                  <div className="py-12 border-t border-zinc-200 text-zinc-400 font-bold uppercase tracking-widest text-sm text-center">
+                    No orders placed yet
+                  </div>
                 )}
-              </tbody>
-            </table>
+              </div>
+            </div>
           </div>
-        </div>
+          <button onClick={() => navigate('/seller/orders')} className="md:hidden mt-8 w-full text-center text-cinematic-dark font-bold tracking-widest uppercase text-sm hover:opacity-70 transition-opacity">
+               View Complete History →
+          </button>
+        </FadeInScroll>
 
       </div>
     </CinematicDashboardLayout>
