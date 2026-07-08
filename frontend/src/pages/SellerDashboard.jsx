@@ -97,29 +97,25 @@ export default function SellerDashboard() {
   const overview = analyticsData?.overview || {};
   const revenueByDay = analyticsData?.revenue_by_day || [];
   const recentOrders = analyticsData?.recent_orders || [];
+  const lowStockProducts = analyticsData?.low_stock_products || [];
 
-  const salesData = revenueByDay.map(d => Number(d.orders_count) || 0);
-  const revenueData = revenueByDay.map(d => Number(d.revenue) || 0);
-  const totalSales = salesData.reduce((sum, val) => sum + val, 0);
-  const totalRevenue = overview.total_revenue || 0;
-  
-  const stats = {
-    revenue: totalRevenue,
-    profit: (dashboardData?.revenue_last_30days || 0) * 0.95, // Seller takes 95%
-    totalOrders: overview.total_orders || 0,
-    orderGrowth: overview.order_growth_percentage || 0,
-    revenueGrowth: overview.revenue_growth_percentage || 0,
-  };
+  // Calculate This Month (Last 30 Days) stats
+  const totalOrders30d = revenueByDay.reduce((sum, d) => sum + (Number(d.orders_count) || 0), 0);
+  const totalRevenue30d = revenueByDay.reduce((sum, d) => sum + (Number(d.revenue) || 0), 0);
 
-  // Pure CSS Lightweight Chart Data prep
-  const maxSales = Math.max(...salesData, 10);
-  const maxRevenue = Math.max(...revenueData, 1000);
+  // Calculate This Week (Last 7 Days) stats
+  const last7Days = revenueByDay.slice(-7);
+  const totalRevenue7d = last7Days.reduce((sum, d) => sum + (Number(d.revenue) || 0), 0);
+
+  // Store Health stats
+  const pendingOrders = overview.pending_orders || 0;
+  const lowStockCount = lowStockProducts.length;
 
   return (
     <CinematicDashboardLayout>
       <div className="max-w-7xl mx-auto pb-32 overflow-hidden px-2 md:px-0">
         
-        {/* HUGE HERO: NET PROFIT */}
+        {/* HUGE HERO: THIS MONTH */}
         <div className="pt-12 pb-24 md:pb-32 border-b border-zinc-200">
           <Motion.p 
             initial={{ opacity: 0, y: 20 }}
@@ -127,7 +123,7 @@ export default function SellerDashboard() {
             transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
             className="text-zinc-500 font-bold tracking-[0.2em] uppercase text-sm mb-6"
           >
-            {sellerProfile?.shop_name ? `${sellerProfile.shop_name} • ` : ''}Net Profit
+            {sellerProfile?.shop_name ? `${sellerProfile.shop_name} • ` : ''}This Month
           </Motion.p>
           <Motion.h1 
             initial={{ opacity: 0, y: 40 }}
@@ -135,7 +131,7 @@ export default function SellerDashboard() {
             transition={{ duration: 1, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
             className="text-[64px] sm:text-[96px] md:text-[140px] font-black tracking-tighter leading-[0.9] text-cinematic-dark break-words"
           >
-            {formatPrice(stats.profit)}
+            {formatPrice(totalRevenue30d)}
           </Motion.h1>
           <Motion.div 
              initial={{ opacity: 0 }}
@@ -144,7 +140,7 @@ export default function SellerDashboard() {
              className="mt-8 flex flex-col md:flex-row md:items-center gap-4 md:gap-8"
           >
              <div className="text-zinc-400 font-medium tracking-wide">
-               Your 95% estimated payout for the last 30 days.
+               Total sales revenue generated in the last 30 days.
              </div>
           </Motion.div>
         </div>
@@ -153,111 +149,89 @@ export default function SellerDashboard() {
         <FadeInScroll className="py-24 md:py-32 border-b border-zinc-200">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-16">
              <div className="border-t-2 border-zinc-900 pt-8">
-                 <p className="text-zinc-500 font-bold tracking-[0.2em] uppercase text-xs mb-4">Gross Revenue</p>
-                 <p className="text-5xl font-black text-zinc-900">{formatPrice(stats.revenue)}</p>
-                 {stats.revenueGrowth !== 0 && (
-                   <p className={`mt-4 text-sm font-bold ${stats.revenueGrowth > 0 ? 'text-cinematic-dark' : 'text-red-500'}`}>
-                     {stats.revenueGrowth > 0 ? '↗' : '↘'} {Math.abs(stats.revenueGrowth).toFixed(1)}% vs last month
-                   </p>
-                 )}
+                 <p className="text-zinc-500 font-bold tracking-[0.2em] uppercase text-xs mb-4">Gross Revenue (This Week)</p>
+                 <p className="text-5xl font-black text-zinc-900">{formatPrice(totalRevenue7d)}</p>
+                 <p className="mt-4 text-sm font-bold text-zinc-500">Last 7 days</p>
              </div>
              <div className="border-t-2 border-zinc-900 pt-8">
-                 <p className="text-zinc-500 font-bold tracking-[0.2em] uppercase text-xs mb-4">Total Sales</p>
-                 <p className="text-5xl font-black text-zinc-900">{totalSales.toLocaleString()}</p>
-                 {stats.orderGrowth !== 0 && (
-                   <p className={`mt-4 text-sm font-bold ${stats.orderGrowth > 0 ? 'text-cinematic-dark' : 'text-red-500'}`}>
-                     {stats.orderGrowth > 0 ? '↗' : '↘'} {Math.abs(stats.orderGrowth).toFixed(1)}% vs last month
-                   </p>
-                 )}
+                 <p className="text-zinc-500 font-bold tracking-[0.2em] uppercase text-xs mb-4">Total Sales (This Month)</p>
+                 <p className="text-5xl font-black text-zinc-900">{formatPrice(totalRevenue30d)}</p>
+                 <p className="mt-4 text-sm font-bold text-zinc-500">Last 30 days</p>
              </div>
              <div className="border-t-2 border-zinc-900 pt-8">
-                 <p className="text-zinc-500 font-bold tracking-[0.2em] uppercase text-xs mb-4">Total Orders</p>
-                 <p className="text-5xl font-black text-zinc-900">{stats.totalOrders.toLocaleString()}</p>
+                 <p className="text-zinc-500 font-bold tracking-[0.2em] uppercase text-xs mb-4">Total Orders (This Month)</p>
+                 <p className="text-5xl font-black text-zinc-900">{totalOrders30d.toLocaleString()}</p>
+                 <p className="mt-4 text-sm font-bold text-zinc-500">Last 30 days</p>
              </div>
           </div>
         </FadeInScroll>
 
-        {/* CHARTS (Editorial 2-column split, No Boxes) */}
-        <FadeInScroll className="grid grid-cols-1 lg:grid-cols-2 gap-24 py-24 md:py-32 border-b border-zinc-200">
-          {/* Sales Bar Chart */}
-          <div>
-            <h2 className="text-4xl font-extrabold tracking-tight text-zinc-900 mb-16">Sales Volume</h2>
-            <div className="h-[300px] flex items-end gap-2 sm:gap-4 relative">
-              {/* Y-axis grid lines */}
-              <div className="absolute inset-0 flex flex-col justify-between pointer-events-none opacity-50">
-                {[...Array(4)].map((_, i) => <div key={i} className="w-full border-t border-zinc-200" />)}
-              </div>
-              
-              {/* Bars */}
-              {salesData.length > 0 ? salesData.map((val, i) => {
-                const heightPct = Math.max((val / maxSales) * 100, 2);
-                return (
-                  <div key={i} className="flex-1 flex justify-center group relative h-full items-end z-10">
-                    <div className="absolute -top-10 opacity-0 group-hover:opacity-100 bg-zinc-900 text-white text-xs font-bold px-2 py-1 rounded transition-opacity pointer-events-none">
-                      {val}
-                    </div>
-                    <Motion.div 
-                      initial={{ height: 0 }}
-                      whileInView={{ height: `${heightPct}%` }}
-                      viewport={{ once: true, margin: "-100px" }}
-                      transition={{ duration: 1, ease: [0.16, 1, 0.3, 1], delay: i * 0.05 }}
-                      className="w-full max-w-[32px] bg-zinc-900 group-hover:bg-cinematic-light transition-colors"
+        {/* CHARTS / DATA REPS (Clear, Table-like Representation) */}
+        <FadeInScroll className="py-24 md:py-32 border-b border-zinc-200">
+          <h2 className="text-4xl font-extrabold tracking-tight text-zinc-900 mb-16">Recent Sales Volume</h2>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
+            <div className="space-y-6">
+              <h3 className="text-zinc-500 font-bold tracking-[0.2em] uppercase text-xs border-b border-zinc-200 pb-4">Last 7 Days Revenue</h3>
+              {last7Days.length > 0 ? last7Days.map((day, i) => (
+                <div key={i} className="flex items-center justify-between group">
+                  <div className="w-32 font-bold text-zinc-900">{formatDate(day.date).split(',')[0]}</div>
+                  <div className="flex-1 mx-6 relative h-2 bg-zinc-100 rounded-full overflow-hidden">
+                    <div 
+                      className="absolute top-0 left-0 h-full bg-cinematic-dark"
+                      style={{ width: `${Math.max((Number(day.revenue) / Math.max(...last7Days.map(d => Number(d.revenue)), 1)) * 100, 2)}%` }}
                     />
                   </div>
-                );
-              }) : (
-                <div className="w-full h-full flex items-center justify-center text-zinc-400 font-medium">No sales data</div>
+                  <div className="w-32 text-right font-black text-zinc-900">{formatPrice(Number(day.revenue))}</div>
+                </div>
+              )) : (
+                <div className="text-zinc-400 font-medium">No recent revenue data.</div>
+              )}
+            </div>
+
+            <div className="space-y-6">
+              <h3 className="text-zinc-500 font-bold tracking-[0.2em] uppercase text-xs border-b border-zinc-200 pb-4">Last 7 Days Orders</h3>
+              {last7Days.length > 0 ? last7Days.map((day, i) => (
+                <div key={i} className="flex items-center justify-between group">
+                  <div className="w-32 font-bold text-zinc-900">{formatDate(day.date).split(',')[0]}</div>
+                  <div className="flex-1 mx-6 relative h-2 bg-zinc-100 rounded-full overflow-hidden">
+                    <div 
+                      className="absolute top-0 left-0 h-full bg-zinc-900"
+                      style={{ width: `${Math.max((Number(day.orders_count) / Math.max(...last7Days.map(d => Number(d.orders_count)), 1)) * 100, 2)}%` }}
+                    />
+                  </div>
+                  <div className="w-32 text-right font-black text-zinc-900">{day.orders_count} orders</div>
+                </div>
+              )) : (
+                <div className="text-zinc-400 font-medium">No recent orders data.</div>
               )}
             </div>
           </div>
-
-          {/* Revenue Waterfall (Pure CSS) */}
-          <div>
-             <h2 className="text-4xl font-extrabold tracking-tight text-zinc-900 mb-16">Revenue Flow</h2>
-             <div className="h-[300px] flex gap-1 sm:gap-2 relative">
-                {revenueData.length > 0 ? revenueData.map((val, i) => {
-                  const startPct = 100 - ((val / maxRevenue) * 100);
-                  return (
-                    <div key={i} className="flex-1 flex flex-col group relative h-full">
-                       <div className="absolute top-0 opacity-0 group-hover:opacity-100 bg-zinc-900 text-white text-xs font-bold px-2 py-1 rounded transition-opacity z-10 w-max transform -translate-x-1/2 left-1/2 pointer-events-none">
-                          {formatPrice(val)}
-                       </div>
-                       <div style={{ height: `${startPct}%` }} className="w-full" />
-                       <Motion.div 
-                         initial={{ opacity: 0 }}
-                         whileInView={{ opacity: 1 }}
-                         viewport={{ once: true }}
-                         transition={{ duration: 0.5, delay: i * 0.05 }}
-                         className="w-full flex-1 bg-gradient-to-b from-cinematic-dark via-cinematic-dark/30 to-transparent"
-                       />
-                    </div>
-                  );
-                }) : (
-                  <div className="w-full h-full flex items-center justify-center text-zinc-400 font-medium">No revenue data</div>
-                )}
-             </div>
-          </div>
         </FadeInScroll>
 
-        {/* STORE HEALTH (Seamless integration with theme color) */}
+        {/* STORE HEALTH */}
         <div className="py-32 my-24 border-y border-zinc-200">
           <FadeInScroll>
              <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-24 gap-8">
                 <div>
                   <h2 className="text-5xl sm:text-6xl font-black tracking-tight mb-4 text-cinematic-dark">Store Health</h2>
-                  <p className="text-zinc-500 text-xl font-light">Inventory and active product status.</p>
+                  <p className="text-zinc-500 text-xl font-light">Inventory and active order status.</p>
                 </div>
              </div>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
                  <div>
-                    <p className="text-zinc-500 font-bold tracking-[0.2em] uppercase text-xs mb-6">Active Products</p>
-                    <p className="text-[100px] font-black text-zinc-900 leading-[0.9] tracking-tighter">{dashboardData?.active_products || 0}</p>
+                    <p className="text-zinc-500 font-bold tracking-[0.2em] uppercase text-xs mb-6">Pending Orders</p>
+                    <p className={`text-[100px] font-black leading-[0.9] tracking-tighter ${pendingOrders > 0 ? 'text-zinc-900' : 'text-zinc-300'}`}>
+                      {pendingOrders}
+                    </p>
+                    <p className="mt-4 text-sm font-bold text-zinc-500">Orders awaiting processing</p>
                  </div>
                  <div>
                     <p className="text-zinc-500 font-bold tracking-[0.2em] uppercase text-xs mb-6">Low Stock Alerts</p>
-                    <p className={`text-[100px] font-black leading-[0.9] tracking-tighter ${dashboardData?.low_stock_items > 0 ? 'text-red-500' : 'text-cinematic-dark'}`}>
-                      {dashboardData?.low_stock_items || 0}
+                    <p className={`text-[100px] font-black leading-[0.9] tracking-tighter ${lowStockCount > 0 ? 'text-red-500' : 'text-zinc-300'}`}>
+                      {lowStockCount}
                     </p>
+                    <p className="mt-4 text-sm font-bold text-zinc-500">Products needing restock</p>
                  </div>
              </div>
           </FadeInScroll>

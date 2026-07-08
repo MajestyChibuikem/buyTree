@@ -12,14 +12,17 @@ export default function Orders() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (currentShop) {
-      fetchOrders();
-    }
+    fetchOrders();
   }, [currentShop]);
 
   const fetchOrders = async () => {
     try {
-      const response = await orderService.getUserOrdersByShop(currentShop.shop_slug);
+      let response;
+      if (currentShop) {
+        response = await orderService.getUserOrdersByShop(currentShop.shop_slug);
+      } else {
+        response = await orderService.getUserOrders();
+      }
       setOrders(response.data);
     } catch (error) {
       console.error('Failed to fetch orders:', error);
@@ -54,27 +57,7 @@ export default function Orders() {
     return colors[status] || 'border-zinc-300 text-zinc-500';
   };
 
-  if (!currentShop) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center font-cinematic">
-        <div className="text-center max-w-md mx-auto px-6">
-          <div className="text-8xl font-black text-zinc-100 mb-6">WAIT</div>
-          <h2 className="text-2xl font-black text-zinc-900 mb-2">
-            No active shop context
-          </h2>
-          <p className="text-zinc-500 font-medium mb-12">
-            You need to be browsing a shop to view your orders from that shop.
-          </p>
-          <button
-            onClick={() => navigate('/')}
-            className="w-full px-8 py-4 bg-zinc-900 text-white font-black uppercase tracking-widest text-xs hover:bg-cinematic-dark transition-colors"
-          >
-            Go Home
-          </button>
-        </div>
-      </div>
-    );
-  }
+
 
   if (loading) {
     return (
@@ -95,7 +78,13 @@ export default function Orders() {
           <div className="flex justify-between items-center h-12">
             <div className="flex items-center gap-6">
               <button
-                onClick={() => navigate(-1)}
+                onClick={() => {
+                  if (currentShop) {
+                    navigate(`/shop/${currentShop.shop_slug}`);
+                  } else {
+                    navigate('/');
+                  }
+                }}
                 className="hover:text-cinematic-dark transition-colors flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-zinc-500"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -123,10 +112,16 @@ export default function Orders() {
         {orders.length === 0 ? (
           <div className="text-center py-24">
             <div className="text-8xl font-black text-zinc-100 mb-6">ZERO</div>
-            <h3 className="text-2xl font-black text-zinc-900 mb-2">No orders from {currentShop?.shop_name}</h3>
-            <p className="text-zinc-500 font-medium mb-12">Start exploring their collection to make your first purchase.</p>
+            <h3 className="text-2xl font-black text-zinc-900 mb-2">
+              {currentShop ? `No orders from ${currentShop.shop_name}` : 'No orders yet'}
+            </h3>
+            <p className="text-zinc-500 font-medium mb-12">
+              {currentShop 
+                ? 'Start exploring their collection to make your first purchase.' 
+                : 'Start exploring shops to make your first purchase.'}
+            </p>
             <button
-              onClick={() => navigate(`/shop/${currentShop?.shop_slug}`)}
+              onClick={() => navigate(currentShop ? `/shop/${currentShop.shop_slug}` : '/')}
               className="px-8 py-4 bg-zinc-900 text-white font-black uppercase tracking-widest text-xs hover:bg-cinematic-dark transition-colors"
             >
               Continue Shopping
@@ -137,7 +132,7 @@ export default function Orders() {
             <div className="mb-12">
               <h1 className="text-4xl font-black tracking-tighter text-zinc-900 uppercase">Order History</h1>
               <p className="text-xs font-bold uppercase tracking-widest text-zinc-400 mt-2">
-                Purchases from {currentShop?.shop_name}
+                {currentShop ? `Purchases from ${currentShop.shop_name}` : 'All Purchases'}
               </p>
             </div>
 

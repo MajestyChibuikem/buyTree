@@ -19,15 +19,15 @@ export const ShopContextProvider = ({ children }) => {
 
   useEffect(() => {
     const initializeShopContext = async () => {
-      // Restore from sessionStorage on mount
-      const saved = sessionStorage.getItem('buytree_current_shop');
+      // Restore from localStorage on mount
+      const saved = localStorage.getItem('buytree_current_shop');
       if (saved) {
         try {
           const parsedShop = JSON.parse(saved);
           setCurrentShop(parsedShop);
         } catch (error) {
           console.error('Error parsing saved shop:', error);
-          sessionStorage.removeItem('buytree_current_shop');
+          localStorage.removeItem('buytree_current_shop');
         }
       }
 
@@ -54,7 +54,7 @@ export const ShopContextProvider = ({ children }) => {
       const response = await sellerService.getSellerBySlug(shopSlug);
       const shop = response.data.seller;
       setCurrentShop(shop);
-      sessionStorage.setItem('buytree_current_shop', JSON.stringify(shop));
+      localStorage.setItem('buytree_current_shop', JSON.stringify(shop));
     } catch (error) {
       console.error('Error fetching shop:', error);
       clearCurrentShop();
@@ -65,15 +65,15 @@ export const ShopContextProvider = ({ children }) => {
 
   const clearCurrentShop = () => {
     setCurrentShop(null);
-    sessionStorage.removeItem('buytree_current_shop');
+    localStorage.removeItem('buytree_current_shop');
   };
 
   const updateCurrentShop = (shop) => {
     setCurrentShop(shop);
     if (shop) {
-      sessionStorage.setItem('buytree_current_shop', JSON.stringify(shop));
+      localStorage.setItem('buytree_current_shop', JSON.stringify(shop));
     } else {
-      sessionStorage.removeItem('buytree_current_shop');
+      localStorage.removeItem('buytree_current_shop');
     }
   };
 
