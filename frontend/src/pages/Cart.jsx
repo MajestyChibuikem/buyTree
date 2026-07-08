@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { useShopContext } from '../context/ShopContext';
 import { useEffect } from 'react';
+import { motion as Motion } from 'framer-motion';
 
 export default function Cart() {
   const navigate = useNavigate();
@@ -10,12 +11,10 @@ export default function Cart() {
   const { currentShop, setCurrentShop } = useShopContext();
   const { cartItems, loading, updateQuantity, removeFromCart, getCartTotal } = useCart();
 
-  // Auto-set shop context from cart items if missing
   useEffect(() => {
     if (!currentShop && cartItems.length > 0) {
       const firstItem = cartItems[0];
       if (firstItem.shop_slug) {
-        // Restore shop context from cart
         const shopData = {
           id: firstItem.seller_id,
           shop_slug: firstItem.shop_slug,
@@ -62,7 +61,6 @@ export default function Cart() {
       return;
     }
 
-    // Navigate to checkout with only items from this seller
     navigate('/checkout', { state: { sellerId } });
   };
 
@@ -70,7 +68,6 @@ export default function Cart() {
     return items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   };
 
-  // Group cart items by seller
   const itemsBySeller = cartItems.reduce((acc, item) => {
     const sellerId = item.seller_id;
     if (!acc[sellerId]) {
@@ -86,45 +83,50 @@ export default function Cart() {
 
   const sellerGroups = Object.values(itemsBySeller);
   const total = getCartTotal();
-  const platformFee = total * 0.05;
   const minOrderValue = 4000;
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center font-cinematic">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading cart...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-zinc-900 mx-auto"></div>
+          <p className="mt-4 text-zinc-500 font-bold uppercase tracking-widest text-xs">Loading cart...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24 sm:pb-8">
-      {/* Header */}
-      <nav className="bg-white shadow sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center gap-2">
+    <div className="min-h-screen bg-white font-cinematic text-zinc-900 pb-24 sm:pb-8">
+      {/* Navbar */}
+      <nav className="bg-white border-b border-zinc-100 sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-6 lg:px-12 py-4">
+          <div className="flex justify-between items-center h-12">
+            <div className="flex items-center gap-6">
               <button
                 onClick={() => navigate(-1)}
-                className="p-2 hover:bg-gray-100 rounded-full"
+                className="hover:text-cinematic-dark transition-colors flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-zinc-500"
               >
-                <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
+                Back
               </button>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Shopping Cart</h1>
+              <div className="hidden sm:block w-px h-6 bg-zinc-200"></div>
+              <div className="hidden sm:block text-xl font-black tracking-tighter text-zinc-900">
+                CART
+              </div>
             </div>
-            <div className="flex items-center space-x-2 sm:space-x-4">
+            <div className="flex items-center space-x-6">
               {user && (
                 <>
-                  <span className="text-gray-700 hidden sm:inline text-sm">Hello, {user.firstName}!</span>
+                  <span className="text-zinc-500 hidden sm:inline text-xs font-bold tracking-widest uppercase">
+                    {user.firstName}
+                  </span>
                   {user.role === 'seller' && (
                     <button
                       onClick={() => navigate('/seller/dashboard')}
-                      className="px-3 py-2 text-green-600 hover:bg-green-50 rounded-lg text-sm"
+                      className="text-cinematic-dark hover:text-zinc-900 text-xs font-bold tracking-widest uppercase hidden sm:block transition-colors"
                     >
                       Dashboard
                     </button>
@@ -136,214 +138,202 @@ export default function Cart() {
         </div>
       </nav>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+      <div className="max-w-7xl mx-auto px-6 lg:px-12 py-12 lg:py-24">
         {cartItems.length === 0 ? (
-          // Empty Cart
-          <div className="text-center py-16 bg-white rounded-lg shadow">
-            <svg className="mx-auto h-24 w-24 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-            </svg>
-            <h3 className="mt-4 text-xl font-semibold text-gray-900">Your cart is empty</h3>
-            <p className="mt-2 text-gray-600">Add some products to get started!</p>
+          <Motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center py-24 max-w-md mx-auto"
+          >
+            <div className="text-8xl font-black text-zinc-100 mb-6">EMPTY</div>
+            <h3 className="text-2xl font-black text-zinc-900 mb-2">Your cart is empty.</h3>
+            <p className="text-zinc-500 font-medium mb-12">Looks like you haven't added any pieces to your cart yet.</p>
             <button
               onClick={() => navigate(-1)}
-              className="mt-6 px-6 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition-colors"
+              className="px-8 py-4 bg-zinc-900 text-white font-black uppercase tracking-widest text-xs hover:bg-cinematic-dark transition-colors w-full"
             >
-              Go Back
+              Continue Shopping
             </button>
-          </div>
+          </Motion.div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Cart Items */}
-            <div className="lg:col-span-2 space-y-4">
-              {sellerGroups.map((sellerGroup, idx) => {
-                const storeTotal = getStoreTotal(sellerGroup.items);
-                const storeMeetsMinimum = storeTotal >= minOrderValue;
-                const sellerId = sellerGroup.items[0]?.seller_id;
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-24">
+            
+            {/* Cart Items List */}
+            <div className="lg:col-span-7 xl:col-span-8">
+              <h1 className="text-4xl font-black tracking-tighter text-zinc-900 mb-12 uppercase">Your Selection</h1>
 
-                return (
-                  <div key={idx} className="bg-white rounded-lg shadow overflow-hidden">
-                    {/* Shop Header */}
-                    <div className="bg-gray-50 px-4 py-3 border-b border-gray-200 flex items-center justify-between">
-                      <button
-                        onClick={() => navigate(`/shop/${sellerGroup.shopSlug}`)}
-                        className="flex items-center gap-2 hover:text-green-600 transition-colors"
-                      >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                        </svg>
-                        <span className="font-semibold text-gray-900">{sellerGroup.shopName}</span>
-                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                      </button>
-                      <div className="text-right">
-                        <p className="text-sm font-semibold text-gray-900">{formatPrice(storeTotal)}</p>
-                        <p className="text-xs text-gray-500">{sellerGroup.items.length} item{sellerGroup.items.length > 1 ? 's' : ''}</p>
-                      </div>
-                    </div>
+              <div className="space-y-16">
+                {sellerGroups.map((sellerGroup, idx) => {
+                  const storeTotal = getStoreTotal(sellerGroup.items);
+                  const storeMeetsMinimum = storeTotal >= minOrderValue;
+                  const sellerId = sellerGroup.items[0]?.seller_id;
 
-                    {/* Shop Items */}
-                    <div className="divide-y divide-gray-200">
-                    {sellerGroup.items.map((item) => (
-                      <div key={item.id} className="p-4 sm:p-6">
-                        <div className="flex gap-4">
-                          {/* Product Image */}
-                          <button
-                            onClick={() => navigate(`/shop/${item.shop_slug}/product/${item.slug}`)}
-                            className="flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24 bg-gray-100 rounded-lg overflow-hidden"
-                          >
-                            {item.image_urls && item.image_urls.length > 0 ? (
-                              <img
-                                src={item.image_urls[0]}
-                                alt={item.name}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center">
-                                <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                              </div>
-                            )}
-                          </button>
-
-                          {/* Product Info */}
-                          <div className="flex-1 min-w-0">
-                            <button
-                              onClick={() => navigate(`/shop/${item.shop_slug}/product/${item.slug}`)}
-                              className="text-left block"
-                            >
-                              <h3 className="font-semibold text-gray-900 hover:text-green-600 line-clamp-2">
-                                {item.name}
-                              </h3>
-                            </button>
-                            <p className="text-lg font-bold text-green-600 mt-1">
-                              {formatPrice(item.price)}
-                            </p>
-                            <p className="text-sm text-gray-600 mt-1">
-                              {item.quantity_available} available
-                            </p>
-
-                            {/* Quantity Controls */}
-                            <div className="flex items-center gap-4 mt-3">
-                              <div className="flex items-center gap-2">
-                                <button
-                                  onClick={() => handleQuantityChange(item.product_id, item.quantity - 1)}
-                                  className="w-8 h-8 rounded-lg border border-gray-300 flex items-center justify-center hover:bg-gray-50"
-                                  disabled={item.quantity <= 1}
-                                >
-                                  −
-                                </button>
-                                <span className="w-8 text-center font-semibold">{item.quantity}</span>
-                                <button
-                                  onClick={() => handleQuantityChange(item.product_id, item.quantity + 1)}
-                                  className="w-8 h-8 rounded-lg border border-gray-300 flex items-center justify-center hover:bg-gray-50"
-                                  disabled={item.quantity >= item.quantity_available}
-                                >
-                                  +
-                                </button>
-                              </div>
-
-                              <button
-                                onClick={() => handleRemove(item.product_id)}
-                                className="text-sm text-red-600 hover:text-red-700 font-medium"
-                              >
-                                Remove
-                              </button>
-                            </div>
-
-                            {/* Subtotal */}
-                            <p className="text-sm text-gray-600 mt-2">
-                              Subtotal: <span className="font-semibold text-gray-900">{formatPrice(item.price * item.quantity)}</span>
-                            </p>
-                          </div>
+                  return (
+                    <div key={idx} className="border-t-2 border-zinc-900 pt-8">
+                      {/* Shop Header */}
+                      <div className="flex items-center justify-between mb-8 pb-4 border-b border-zinc-200">
+                        <button
+                          onClick={() => navigate(`/shop/${sellerGroup.shopSlug}`)}
+                          className="flex items-center gap-4 hover:text-cinematic-dark transition-colors group"
+                        >
+                          <span className="text-sm font-bold uppercase tracking-widest text-zinc-900 group-hover:text-cinematic-dark">{sellerGroup.shopName}</span>
+                          <span className="text-zinc-400 group-hover:translate-x-1 transition-transform">→</span>
+                        </button>
+                        <div className="text-right">
+                          <p className="text-lg font-black text-zinc-900">{formatPrice(storeTotal)}</p>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">{sellerGroup.items.length} item{sellerGroup.items.length > 1 ? 's' : ''}</p>
                         </div>
                       </div>
-                    ))}
-                  </div>
 
-                  {/* Store Checkout Footer */}
-                  <div className="bg-gray-50 px-4 py-4 border-t border-gray-200">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-sm text-gray-600">Store Total:</span>
-                      <span className="text-lg font-bold text-gray-900">{formatPrice(storeTotal)}</span>
-                    </div>
+                      {/* Items */}
+                      <div className="space-y-8">
+                        {sellerGroup.items.map((item) => (
+                          <div key={item.id} className="flex gap-6 sm:gap-8 group">
+                            {/* Product Image */}
+                            <button
+                              onClick={() => navigate(`/shop/${item.shop_slug}/product/${item.slug}`)}
+                              className="flex-shrink-0 w-24 h-32 sm:w-32 sm:h-40 bg-zinc-100 overflow-hidden"
+                            >
+                              {item.image_urls && item.image_urls.length > 0 ? (
+                                <img
+                                  src={item.image_urls[0]}
+                                  alt={item.name}
+                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center">
+                                  <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">No Image</span>
+                                </div>
+                              )}
+                            </button>
 
-                    {!storeMeetsMinimum && (
-                      <div className="bg-orange-50 border border-orange-200 rounded-lg p-2 mb-3">
-                        <p className="text-xs text-orange-800">
-                          Add {formatPrice(minOrderValue - storeTotal)} more from this store to checkout
-                        </p>
+                            {/* Product Info */}
+                            <div className="flex-1 flex flex-col justify-between py-1">
+                              <div>
+                                <button
+                                  onClick={() => navigate(`/shop/${item.shop_slug}/product/${item.slug}`)}
+                                  className="text-left block w-full mb-2"
+                                >
+                                  <h3 className="text-lg sm:text-xl font-bold text-zinc-900 hover:text-cinematic-dark transition-colors line-clamp-2 leading-snug">
+                                    {item.name}
+                                  </h3>
+                                </button>
+                                <p className="text-xl font-black text-zinc-900 mb-1">
+                                  {formatPrice(item.price)}
+                                </p>
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                                  {item.quantity_available} Available
+                                </p>
+                              </div>
+
+                              {/* Controls */}
+                              <div className="flex items-center justify-between mt-4 pt-4 border-t border-zinc-100">
+                                <div className="flex items-center border border-zinc-200">
+                                  <button
+                                    onClick={() => handleQuantityChange(item.product_id, item.quantity - 1)}
+                                    className="w-8 h-8 flex items-center justify-center hover:bg-zinc-50 text-zinc-900 font-medium transition-colors"
+                                    disabled={item.quantity <= 1}
+                                  >
+                                    −
+                                  </button>
+                                  <span className="w-8 text-center text-sm font-bold border-x border-zinc-200">{item.quantity}</span>
+                                  <button
+                                    onClick={() => handleQuantityChange(item.product_id, item.quantity + 1)}
+                                    className="w-8 h-8 flex items-center justify-center hover:bg-zinc-50 text-zinc-900 font-medium transition-colors"
+                                    disabled={item.quantity >= item.quantity_available}
+                                  >
+                                    +
+                                  </button>
+                                </div>
+                                <button
+                                  onClick={() => handleRemove(item.product_id)}
+                                  className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 hover:text-red-600 transition-colors"
+                                >
+                                  Remove
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    )}
 
-                    {!user ? (
-                      <button
-                        onClick={() => navigate('/login?redirect=/checkout')}
-                        className="w-full py-3 rounded-lg font-semibold transition-colors bg-green-600 text-white hover:bg-green-700"
-                      >
-                        Login to Checkout
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => handleCheckoutStore(sellerId)}
-                        disabled={!storeMeetsMinimum}
-                        className={`w-full py-3 rounded-lg font-semibold transition-colors ${
-                          storeMeetsMinimum
-                            ? 'bg-green-600 text-white hover:bg-green-700'
-                            : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                        }`}
-                      >
-                        {storeMeetsMinimum ? 'Checkout This Store' : `Minimum ₦4,000 Required`}
-                      </button>
-                    )}
-                  </div>
-                </div>
-                );
-              })}
+                      {/* Store Checkout Action */}
+                      <div className="mt-8 pt-6 border-t border-zinc-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        {!storeMeetsMinimum ? (
+                          <div className="text-xs font-bold uppercase tracking-widest text-red-600">
+                            Minimum ₦4,000 Required
+                          </div>
+                        ) : (
+                          <div className="text-xs font-bold uppercase tracking-widest text-cinematic-dark">
+                            Ready to Checkout
+                          </div>
+                        )}
+
+                        {!user ? (
+                          <button
+                            onClick={() => navigate('/login?redirect=/checkout')}
+                            className="px-8 py-3 bg-zinc-900 text-white font-black uppercase tracking-widest text-[10px] hover:bg-cinematic-dark transition-colors"
+                          >
+                            Login to Checkout
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleCheckoutStore(sellerId)}
+                            disabled={!storeMeetsMinimum}
+                            className={`px-8 py-3 font-black uppercase tracking-widest text-[10px] transition-colors ${
+                              storeMeetsMinimum
+                                ? 'bg-zinc-900 text-white hover:bg-cinematic-dark'
+                                : 'bg-zinc-100 text-zinc-400 cursor-not-allowed'
+                            }`}
+                          >
+                            Checkout This Store
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
-            {/* Order Summary - Desktop */}
-            <div className="hidden lg:block">
-              <div className="bg-white rounded-lg shadow p-6 sticky top-20">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Order Summary</h2>
+            {/* Sticky Order Summary Block */}
+            <div className="lg:col-span-5 xl:col-span-4">
+              <div className="sticky top-24 bg-zinc-50 p-8 xl:p-10 border border-zinc-100">
+                <h2 className="text-xl font-black uppercase tracking-widest text-zinc-900 mb-8 border-b-2 border-zinc-900 pb-4">Summary</h2>
 
-                <div className="space-y-3 mb-4">
-                  <div className="flex justify-between text-gray-600">
+                <div className="space-y-4 mb-8">
+                  <div className="flex justify-between text-sm font-bold uppercase tracking-widest text-zinc-600">
                     <span>Items ({cartItems.length})</span>
                     <span>{formatPrice(total)}</span>
                   </div>
                   {total < minOrderValue && (
-                    <div className="flex justify-between text-orange-600 text-sm">
+                    <div className="flex justify-between text-xs font-bold uppercase tracking-widest text-red-600">
                       <span>Minimum order</span>
                       <span>{formatPrice(minOrderValue)}</span>
                     </div>
                   )}
                 </div>
 
-                <div className="border-t border-gray-200 pt-4 mb-6">
-                  <div className="flex justify-between text-lg font-bold text-gray-900">
-                    <span>Total</span>
-                    <span>{formatPrice(total)}</span>
+                <div className="border-t border-zinc-200 pt-6 mb-8">
+                  <div className="flex justify-between items-end">
+                    <span className="text-sm font-black uppercase tracking-widest text-zinc-900">Total</span>
+                    <span className="text-4xl font-black text-zinc-900">{formatPrice(total)}</span>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mt-2 text-right">
                     *5% platform fee included
                   </p>
                 </div>
 
                 {total < minOrderValue && (
-                  <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-4">
-                    <p className="text-sm text-orange-800">
-                      Add {formatPrice(minOrderValue - total)} more to checkout
-                    </p>
+                  <div className="bg-red-50 text-red-600 p-4 mb-8 border border-red-100 text-xs font-bold uppercase tracking-widest text-center">
+                    Add {formatPrice(minOrderValue - total)} more to checkout
                   </div>
                 )}
 
                 {!user ? (
                   <button
                     onClick={() => navigate('/login?redirect=/checkout')}
-                    className="w-full px-6 py-4 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition-colors"
+                    className="w-full px-8 py-5 bg-zinc-900 text-white font-black uppercase tracking-widest text-xs hover:bg-cinematic-dark transition-colors mb-4"
                   >
                     Login to Checkout
                   </button>
@@ -351,62 +341,46 @@ export default function Cart() {
                   <button
                     onClick={handleCheckoutAll}
                     disabled={total < minOrderValue}
-                    className="w-full px-6 py-4 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+                    className="w-full px-8 py-5 bg-zinc-900 text-white font-black uppercase tracking-widest text-xs hover:bg-cinematic-dark transition-colors mb-4 disabled:bg-zinc-200 disabled:text-zinc-400 disabled:cursor-not-allowed"
                   >
-                    Checkout All Stores ({sellerGroups.length})
+                    Checkout All ({sellerGroups.length} Stores)
                   </button>
                 )}
 
-                <p className="text-xs text-center text-gray-500 mt-3">
-                  Or checkout stores individually above
+                <p className="text-[10px] text-center font-bold uppercase tracking-widest text-zinc-400">
+                  Or checkout stores individually
                 </p>
-
-                <button
-                  onClick={() => navigate(-1)}
-                  className="w-full mt-3 px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-colors"
-                >
-                  Go Back
-                </button>
               </div>
             </div>
+
           </div>
         )}
       </div>
 
-      {/* Mobile Fixed Bottom Bar */}
-      {cartItems.length > 0 && (
-        <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg z-30">
-          <div className="flex items-center justify-between mb-3">
+      {/* Mobile Fixed Bottom Bar (Visible only on very small screens if total >= minOrder) */}
+      {cartItems.length > 0 && total >= minOrderValue && (
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-zinc-200 p-4 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-50">
+          <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-sm text-gray-600">Total ({cartItems.length} items)</p>
-              <p className="text-xl font-bold text-gray-900">{formatPrice(total)}</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Total</p>
+              <p className="text-xl font-black text-zinc-900">{formatPrice(total)}</p>
             </div>
             {!user ? (
               <button
                 onClick={() => navigate('/login?redirect=/checkout')}
-                className="px-6 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition-colors text-sm"
+                className="px-6 py-4 bg-zinc-900 text-white font-black uppercase tracking-widest text-[10px]"
               >
-                Login to Checkout
+                LOGIN TO CHECKOUT
               </button>
             ) : (
               <button
                 onClick={handleCheckoutAll}
-                disabled={total < minOrderValue}
-                className="px-6 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed text-sm"
+                className="px-6 py-4 bg-zinc-900 text-white font-black uppercase tracking-widest text-[10px]"
               >
-                Checkout All ({sellerGroups.length})
+                CHECKOUT ALL
               </button>
             )}
           </div>
-          {total < minOrderValue ? (
-            <p className="text-xs text-orange-600 text-center">
-              Minimum order: {formatPrice(minOrderValue)}. Add {formatPrice(minOrderValue - total)} more.
-            </p>
-          ) : (
-            <p className="text-xs text-gray-500 text-center">
-              Or checkout stores individually
-            </p>
-          )}
         </div>
       )}
     </div>

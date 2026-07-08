@@ -45,32 +45,29 @@ export default function Orders() {
 
   const getStatusColor = (status) => {
     const colors = {
-      pending: 'bg-yellow-100 text-yellow-800',
-      processing: 'bg-blue-100 text-blue-800',
-      shipped: 'bg-purple-100 text-purple-800',
-      delivered: 'bg-green-100 text-green-800',
-      cancelled: 'bg-red-100 text-red-800',
+      pending: 'border-zinc-300 text-zinc-500',
+      processing: 'border-zinc-900 text-zinc-900',
+      shipped: 'border-cinematic-dark text-cinematic-dark',
+      delivered: 'bg-zinc-900 text-white border-zinc-900',
+      cancelled: 'border-red-600 text-red-600',
     };
-    return colors[status] || 'bg-gray-100 text-gray-800';
+    return colors[status] || 'border-zinc-300 text-zinc-500';
   };
 
-  // Require shop context
   if (!currentShop) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center max-w-md mx-auto px-4">
-          <svg className="mx-auto h-24 w-24 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-          </svg>
-          <h2 className="mt-6 text-2xl font-bold text-gray-900">
-            Please visit a shop first
+      <div className="min-h-screen bg-white flex items-center justify-center font-cinematic">
+        <div className="text-center max-w-md mx-auto px-6">
+          <div className="text-8xl font-black text-zinc-100 mb-6">WAIT</div>
+          <h2 className="text-2xl font-black text-zinc-900 mb-2">
+            No active shop context
           </h2>
-          <p className="mt-2 text-gray-600">
+          <p className="text-zinc-500 font-medium mb-12">
             You need to be browsing a shop to view your orders from that shop.
           </p>
           <button
             onClick={() => navigate('/')}
-            className="mt-6 px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors"
+            className="w-full px-8 py-4 bg-zinc-900 text-white font-black uppercase tracking-widest text-xs hover:bg-cinematic-dark transition-colors"
           >
             Go Home
           </button>
@@ -81,127 +78,137 @@ export default function Orders() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center font-cinematic">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading orders...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-zinc-900 mx-auto"></div>
+          <p className="mt-4 text-zinc-500 font-bold uppercase tracking-widest text-xs">Loading orders...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-8">
-      {/* Header */}
-      <nav className="bg-white shadow sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center gap-2">
+    <div className="min-h-screen bg-white font-cinematic text-zinc-900 pb-12">
+      {/* Navbar */}
+      <nav className="bg-white border-b border-zinc-100 sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-6 lg:px-12 py-4">
+          <div className="flex justify-between items-center h-12">
+            <div className="flex items-center gap-6">
               <button
                 onClick={() => navigate(-1)}
-                className="p-2 hover:bg-gray-100 rounded-full"
+                className="hover:text-cinematic-dark transition-colors flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-zinc-500"
               >
-                <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
+                Back
               </button>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">My Orders from {currentShop?.shop_name}</h1>
+              <div className="hidden sm:block w-px h-6 bg-zinc-200"></div>
+              <div className="hidden sm:block text-xl font-black tracking-tighter text-zinc-900">
+                MY ORDERS
+              </div>
             </div>
-            <div className="flex items-center space-x-2 sm:space-x-4">
+            <div className="flex items-center space-x-6">
               {user && (
-                <span className="text-gray-700 hidden sm:inline text-sm">Hello, {user.firstName}!</span>
+                <span className="text-zinc-500 hidden sm:inline text-xs font-bold tracking-widest uppercase">
+                  {user.firstName}
+                </span>
               )}
             </div>
           </div>
         </div>
       </nav>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-4xl mx-auto px-6 lg:px-12 py-12 lg:py-24">
         {orders.length === 0 ? (
-          // Empty State
-          <div className="text-center py-16 bg-white rounded-lg shadow">
-            <svg className="mx-auto h-24 w-24 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            <h3 className="mt-4 text-xl font-semibold text-gray-900">No orders yet from {currentShop?.shop_name}</h3>
-            <p className="mt-2 text-gray-600">Start shopping to see your orders here!</p>
+          <div className="text-center py-24">
+            <div className="text-8xl font-black text-zinc-100 mb-6">ZERO</div>
+            <h3 className="text-2xl font-black text-zinc-900 mb-2">No orders from {currentShop?.shop_name}</h3>
+            <p className="text-zinc-500 font-medium mb-12">Start exploring their collection to make your first purchase.</p>
             <button
               onClick={() => navigate(`/shop/${currentShop?.shop_slug}`)}
-              className="mt-6 px-6 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition-colors"
+              className="px-8 py-4 bg-zinc-900 text-white font-black uppercase tracking-widest text-xs hover:bg-cinematic-dark transition-colors"
             >
               Continue Shopping
             </button>
           </div>
         ) : (
-          // Orders List
-          <div className="space-y-4">
+          <div className="space-y-12">
+            <div className="mb-12">
+              <h1 className="text-4xl font-black tracking-tighter text-zinc-900 uppercase">Order History</h1>
+              <p className="text-xs font-bold uppercase tracking-widest text-zinc-400 mt-2">
+                Purchases from {currentShop?.shop_name}
+              </p>
+            </div>
+
             {orders.map((order) => (
               <div
                 key={order.id}
-                className="bg-white rounded-lg shadow overflow-hidden hover:shadow-md transition-shadow"
+                className="border border-zinc-200 hover:border-zinc-900 transition-colors bg-white group"
               >
-                {/* Order Header */}
-                <div className="bg-gray-50 px-4 sm:px-6 py-4 border-b border-gray-200">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                    <div>
-                      <p className="text-sm text-gray-600">Order Number</p>
-                      <p className="font-mono font-semibold text-gray-900">{order.order_number}</p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(order.status)}`}>
-                        {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                      </span>
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        order.payment_status === 'paid' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                      }`}>
-                        {order.payment_status === 'paid' ? 'Paid' : 'Pending Payment'}
-                      </span>
-                    </div>
+                {/* Order Header / Receipt Top */}
+                <div className="bg-zinc-50 border-b border-zinc-200 p-6 lg:p-8 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-6">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-1">Receipt No.</p>
+                    <p className="font-mono font-bold text-lg text-zinc-900">{order.order_number}</p>
+                  </div>
+                  
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className={`px-4 py-1.5 border text-[10px] font-black uppercase tracking-widest ${getStatusColor(order.status)}`}>
+                      {order.status}
+                    </span>
+                    <span className={`px-4 py-1.5 border text-[10px] font-black uppercase tracking-widest ${
+                      order.payment_status === 'paid' ? 'bg-zinc-100 border-zinc-200 text-zinc-900' : 'border-red-200 text-red-600 bg-red-50'
+                    }`}>
+                      {order.payment_status === 'paid' ? 'Paid' : 'Pending Payment'}
+                    </span>
                   </div>
                 </div>
 
-                {/* Order Details */}
-                <div className="px-4 sm:px-6 py-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                {/* Order Details / Receipt Body */}
+                <div className="p-6 lg:p-8">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 mb-8 pb-8 border-b border-zinc-100">
                     <div>
-                      <p className="text-sm text-gray-600">Shop</p>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-2">Shop</p>
                       <button
                         onClick={() => navigate(`/shop/${order.shop_slug}`)}
-                        className="font-semibold text-green-600 hover:text-green-700"
+                        className="font-bold text-zinc-900 hover:text-cinematic-dark transition-colors"
                       >
                         {order.shop_name}
                       </button>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">Order Date</p>
-                      <p className="font-semibold text-gray-900">{formatDate(order.created_at)}</p>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-2">Date</p>
+                      <p className="font-bold text-zinc-900">{formatDate(order.created_at)}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">Total Amount</p>
-                      <p className="font-semibold text-gray-900">{formatPrice(order.total_amount)}</p>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-2">Total</p>
+                      <p className="font-bold text-zinc-900">{formatPrice(order.total_amount)}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">Estimated Delivery</p>
-                      <p className="font-semibold text-gray-900">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-2">Delivery By</p>
+                      <p className="font-bold text-zinc-900">
                         {order.estimated_delivery_date ? formatDate(order.estimated_delivery_date) : 'TBD'}
                       </p>
                     </div>
                   </div>
 
-                  {/* Delivery Details */}
-                  <div className="border-t border-gray-200 pt-4">
-                    <p className="text-sm font-semibold text-gray-900 mb-2">Delivery Address</p>
-                    <p className="text-sm text-gray-600">{order.delivery_name}</p>
-                    <p className="text-sm text-gray-600">{order.delivery_phone}</p>
-                    <p className="text-sm text-gray-600">{order.delivery_address}</p>
+                  {/* Delivery Address */}
+                  <div className="mb-8">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-4">Destination</p>
+                    <div className="text-sm font-medium text-zinc-600 space-y-1">
+                      <p className="text-zinc-900 font-bold">{order.delivery_name}</p>
+                      <p>{order.delivery_phone}</p>
+                      <p className="max-w-md leading-relaxed">{order.delivery_address}</p>
+                    </div>
                   </div>
 
                   {/* View Details Button */}
                   <button
                     onClick={() => navigate(`/orders/${order.id}`)}
-                    className="mt-4 w-full sm:w-auto px-6 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors"
+                    className="w-full sm:w-auto px-8 py-3 bg-white border-2 border-zinc-900 text-zinc-900 font-black uppercase tracking-widest text-[10px] hover:bg-zinc-900 hover:text-white transition-colors"
                   >
-                    View Details
+                    View Full Details
                   </button>
                 </div>
               </div>
