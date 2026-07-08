@@ -94,6 +94,24 @@ export default function CinematicDashboardLayout({ children }) {
           })}
         </nav>
 
+        {/* View Storefront */}
+        {user?.seller?.shop_slug && (
+          <div className="px-4 py-4 border-t border-zinc-100">
+            <a
+              href={`/shop/${user.seller.shop_slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center' : 'justify-center'} gap-3 p-3 rounded-xl bg-zinc-900 text-white hover:bg-cinematic-dark font-bold transition-colors shadow-sm group`}
+              title="View Storefront"
+            >
+              <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+              {!sidebarCollapsed && <span className="text-[10px] uppercase tracking-widest whitespace-nowrap">View Storefront</span>}
+            </a>
+          </div>
+        )}
+
         {/* Toggle Collapse */}
         <div className="p-4 border-t border-zinc-100">
           <button 

@@ -15,6 +15,7 @@ export default function Login() {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [authMode, setAuthMode] = useState('customer'); // 'customer' | 'seller'
 
   // Shop branding state
   const shopSlug = searchParams.get('shopSlug');
@@ -58,6 +59,8 @@ export default function Login() {
           navigate('/admin/dashboard');
         } else if (user.role === 'seller') {
           navigate('/seller/dashboard');
+        } else if (authMode === 'seller') {
+          navigate('/become-seller');
         } else {
           navigate('/orders');
         }
@@ -71,11 +74,29 @@ export default function Login() {
 
   return (
     <CinematicAuthLayout 
-      title={shop ? `Welcome to ${shop.shop_name}.` : "Welcome Back."}
-      subtitle={shop ? "Sign in to continue your shopping." : "Access your dashboard to manage your white-label empire."}
-      imageSrc={shop?.shop_cover_url || "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80"}
+      title={shop ? `Welcome to ${shop.shop_name}.` : (authMode === 'seller' ? "Welcome Back, Creator." : "Welcome Back.")}
+      subtitle={shop ? "Sign in to continue your shopping." : (authMode === 'seller' ? "Access your dashboard to manage your white-label empire." : "Log in to track your orders and shop easily.")}
+      imageSrc={shop?.shop_cover_url || (authMode === 'seller' ? "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80" : "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80")}
     >
       <div>
+        {!shop && (
+          <div className="flex bg-zinc-900 p-1 rounded-lg mb-8 w-fit border border-zinc-800 relative z-20">
+            <button 
+              type="button"
+              onClick={() => setAuthMode('customer')}
+              className={`px-6 py-2 rounded-md text-sm font-bold transition-all ${authMode === 'customer' ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}
+            >
+              Customer
+            </button>
+            <button 
+              type="button"
+              onClick={() => setAuthMode('seller')}
+              className={`px-6 py-2 rounded-md text-sm font-bold transition-all ${authMode === 'seller' ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}
+            >
+              Seller
+            </button>
+          </div>
+        )}
         {shop ? (
           <div className="mb-8">
             {shop.shop_logo_url && (
