@@ -67,24 +67,12 @@ function App() {
           <Route path="/shop/:shopSlug/product/:productSlug" element={<ProductDetail />} />
           {/* Cart - accessible to all users (guests and authenticated) */}
           <Route path="/cart" element={<Cart />} />
-          {/* Checkout - requires auth */}
-          <Route
-            path="/checkout"
-            element={
-              <ProtectedRoute>
-                <Checkout />
-              </ProtectedRoute>
-            }
-          />
-          {/* Payment callback - requires auth */}
-          <Route
-            path="/payment/callback"
-            element={
-              <ProtectedRoute>
-                <PaymentCallback />
-              </ProtectedRoute>
-            }
-          />
+          {/* Checkout - public/guest access supported */}
+          <Route path="/checkout" element={<Checkout />} />
+          {/* Payment callback - public/guest access supported */}
+          <Route path="/payment/callback" element={<PaymentCallback />} />
+          {/* Public Order tracking page for guest orders */}
+          <Route path="/orders/track/:trackingToken" element={<OrderDetail />} />
           {/* Orders - requires auth */}
           <Route
             path="/orders"

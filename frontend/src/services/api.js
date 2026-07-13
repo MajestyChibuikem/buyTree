@@ -241,6 +241,21 @@ export const orderService = {
     return response.data;
   },
 
+  getOrderByTrackingToken: async (trackingToken) => {
+    const response = await cachedGet(`/orders/track/${trackingToken}`);
+    return response.data;
+  },
+
+  confirmDeliveryByToken: async (trackingToken, feedbackData = {}) => {
+    const response = await mutate('post', `/orders/track/${trackingToken}/confirm-delivery`, feedbackData);
+    return response.data;
+  },
+
+  createDisputeByToken: async (trackingToken, disputeData) => {
+    const response = await mutate('post', `/orders/track/${trackingToken}/dispute`, disputeData);
+    return response.data;
+  },
+
   // Shared endpoints (buyer and seller)
   getOrderDetails: async (orderId) => {
     const response = await cachedGet(`/orders/${orderId}`);
