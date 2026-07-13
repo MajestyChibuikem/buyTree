@@ -51,4 +51,28 @@ const authenticateToken = async (req, res, next) => {
   }
 };
 
-module.exports = { authenticateToken };
+const authenticateTokenOptional = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!token) {
+      return next();
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const result = await db.query(
+      'SELECT id, email, first_name, last_name, phone, role FROM users WHERE id = $1',
+      [decoded.id]
+    );
+
+    if (result.rows.length > 0) {
+      req.user = result.rows[0];
+    }
+    next();
+  } catch (error) {
+    next();
+  }
+};
+
+module.exports = { authenticateToken, authenticateTokenOptional };

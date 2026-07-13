@@ -51,6 +51,7 @@ const sendOrderConfirmation = async (orderData) => {
       deliveryFee,
       totalAmount,
       deliveryAddress,
+      trackingToken,
     } = orderData;
 
     const itemsHtml = items
@@ -131,7 +132,7 @@ const sendOrderConfirmation = async (orderData) => {
               </div>
             </div>
 
-            <p>You can track your order status in your <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/orders" style="color: #16a34a;">orders page</a>.</p>
+            <p>You can track your order status in your <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/${trackingToken ? `orders/track/${trackingToken}` : 'orders'}" style="color: #16a34a;">orders page</a>.</p>
 
             <p>If you have any questions, please don't hesitate to contact us.</p>
 
@@ -175,7 +176,39 @@ const sendOrderConfirmation = async (orderData) => {
 // Send order status update email to buyer
 const sendOrderStatusUpdate = async (orderData) => {
   try {
-    const { buyerEmail, buyerName, orderNumber, status, shopName } = orderData;
+    const db = require('../config/database');
+
+    let buyerEmail = orderData.buyerEmail || orderData.buyer_email;
+    let buyerName = orderData.buyerName || orderData.delivery_name || orderData.buyer_name;
+    const orderNumber = orderData.orderNumber || orderData.order_number;
+    const status = orderData.status;
+    let shopName = orderData.shopName || orderData.shop_name;
+    const trackingToken = orderData.tracking_token || orderData.trackingToken;
+
+    const orderId = orderData.id;
+
+    // Fetch missing details from DB if needed
+    if ((!buyerEmail || !buyerName || !shopName) && orderId) {
+      const orderDetails = await db.query(
+        `SELECT o.buyer_email, o.delivery_name, o.tracking_token, s.shop_name, u.email as user_email, u.first_name, u.last_name
+         FROM orders o
+         JOIN sellers s ON o.seller_id = s.id
+         LEFT JOIN users u ON o.buyer_id = u.id
+         WHERE o.id = $1`,
+        [orderId]
+      );
+      if (orderDetails.rows.length > 0) {
+        const row = orderDetails.rows[0];
+        buyerEmail = row.buyer_email || row.user_email;
+        buyerName = row.delivery_name || (row.first_name ? `${row.first_name} ${row.last_name}` : 'Customer');
+        shopName = row.shop_name;
+      }
+    }
+
+    if (!buyerEmail) {
+      console.error(`⚠️ Cannot send status update: no email found for order #${orderNumber}`);
+      return { success: false, error: 'No buyer email found' };
+    }
 
     const statusMessages = {
       processing: {
@@ -218,7 +251,7 @@ const sendOrderStatusUpdate = async (orderData) => {
               <p>${statusInfo.message}</p>
             </div>
 
-            <p>Track your order anytime in your <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/orders" style="color: #16a34a;">orders page</a>.</p>
+            <p>Track your order anytime in your <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/${trackingToken ? `orders/track/${trackingToken}` : 'orders'}" style="color: #16a34a;">orders page</a>.</p>
 
             <p>Best regards,<br>The BuyTree Team</p>
           </div>

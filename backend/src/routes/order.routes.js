@@ -14,15 +14,23 @@ const {
   getSellerNotes,
   getOrderStatusHistory,
   confirmDelivery,
+  getOrderByTrackingToken,
+  confirmDeliveryByToken,
+  createDisputeByToken,
 } = require('../controllers/orderController');
-const { authenticateToken } = require('../middleware/auth');
+const { authenticateToken, authenticateTokenOptional } = require('../middleware/auth');
 
-// All routes require authentication
+// Public / Guest Buyer routes
+router.post('/create', authenticateTokenOptional, createOrder);
+router.get('/verify/:reference', verifyPayment);
+router.get('/track/:trackingToken', getOrderByTrackingToken);
+router.post('/track/:trackingToken/confirm-delivery', confirmDeliveryByToken);
+router.post('/track/:trackingToken/dispute', createDisputeByToken);
+
+// All routes below require seller or buyer authentication
 router.use(authenticateToken);
 
-// Buyer routes
-router.post('/create', createOrder);
-router.get('/verify/:reference', verifyPayment);
+// Authenticated Buyer routes
 router.get('/user', getUserOrders);
 router.get('/user/shop/:shopSlug', getUserOrdersByShop);
 router.post('/:orderId/confirm-delivery', confirmDelivery);

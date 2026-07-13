@@ -1,10 +1,11 @@
 const db = require('../config/database');
 const axios = require('axios');
+const crypto = require('crypto');
 
 // Initialize Paystack payment
 const createOrder = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user ? req.user.id : null;
     const { orders, deliveryDetails } = req.body;
 
     // Validate input
@@ -22,20 +23,31 @@ const createOrder = async (req, res) => {
       });
     }
 
-    // Get user email for Paystack
-    const userResult = await db.query(
-      'SELECT email FROM users WHERE id = $1',
-      [userId]
-    );
+    // Get user email for Paystack (from user profile or deliveryDetails.email for guest)
+    let userEmail;
+    if (userId) {
+      const userResult = await db.query(
+        'SELECT email FROM users WHERE id = $1',
+        [userId]
+      );
 
-    if (userResult.rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found',
-      });
+      if (userResult.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'User not found',
+        });
+      }
+
+      userEmail = userResult.rows[0].email;
+    } else {
+      if (!deliveryDetails.email) {
+        return res.status(400).json({
+          success: false,
+          message: 'Email address is required for guest checkout',
+        });
+      }
+      userEmail = deliveryDetails.email;
     }
-
-    const userEmail = userResult.rows[0].email;
 
     // Calculate total amount across all orders
     let totalAmount = 0;
@@ -125,11 +137,12 @@ const createOrder = async (req, res) => {
     const platformFee = totalAmount * 0.05;
 
     // Generate unique reference
-    const reference = `BT-${Date.now()}-${userId}`;
+    const reference = `BT-${Date.now()}-${userId || 'guest'}`;
 
     // Store order metadata temporarily (we'll create actual orders after payment)
     const metadata = {
       userId,
+      buyerEmail: userEmail,
       orders: orderDetails,
       deliveryDetails,
       totalAmount,
@@ -227,7 +240,7 @@ const verifyPayment = async (req, res) => {
 
     const paymentData = paystackResponse.data.data;
     const { metadata } = paymentData;
-    const { userId, orders, deliveryDetails, totalAmount } = metadata;
+    const { userId, buyerEmail, orders, deliveryDetails, totalAmount } = metadata;
 
     // Start transaction
     await db.query('BEGIN');
@@ -249,18 +262,21 @@ const verifyPayment = async (req, res) => {
         // Generate order number
         const orderNumber = `ORD-${Date.now()}-${sellerId}`;
 
+        // Generate secure tracking token
+        const trackingToken = crypto.randomUUID();
+
         // Create order
         const orderResult = await db.query(
           `INSERT INTO orders (
             order_number, buyer_id, seller_id, total_amount, platform_fee, seller_amount,
             status, payment_status, paystack_reference,
             delivery_name, delivery_phone, delivery_address, notes,
-            estimated_delivery_date
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
-          RETURNING id, order_number`,
+            estimated_delivery_date, buyer_email, tracking_token
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+          RETURNING id, order_number, tracking_token`,
           [
             orderNumber,
-            userId,
+            userId || null,
             sellerId,
             orderTotal,
             platformFee,
@@ -273,6 +289,8 @@ const verifyPayment = async (req, res) => {
             deliveryDetails.address,
             deliveryDetails.notes || null,
             estimatedDeliveryDate,
+            buyerEmail || null,
+            trackingToken,
           ]
         );
 
@@ -304,14 +322,31 @@ const verifyPayment = async (req, res) => {
         createdOrders.push({
           orderId,
           orderNumber: orderResult.rows[0].order_number,
+          trackingToken: orderResult.rows[0].tracking_token,
         });
+
+        // Send confirmation email to buyer (guest or registered)
+        const emailService = require('../services/emailService');
+        await emailService.sendOrderConfirmation({
+          buyerEmail: buyerEmail || deliveryDetails.email,
+          buyerName: deliveryDetails.name,
+          orderNumber: orderNumber,
+          items: validatedItems,
+          subtotal: orderTotal,
+          deliveryFee: 0,
+          totalAmount: orderTotal,
+          deliveryAddress: deliveryDetails,
+          trackingToken: trackingToken,
+        }).catch(e => console.error('Failed to send confirmation email:', e));
       }
 
-      // Clear user's cart
-      await db.query(
-        'DELETE FROM cart_items WHERE cart_id IN (SELECT id FROM carts WHERE user_id = $1)',
-        [userId]
-      );
+      // Clear user's cart if logged in
+      if (userId) {
+        await db.query(
+          'DELETE FROM cart_items WHERE cart_id IN (SELECT id FROM carts WHERE user_id = $1)',
+          [userId]
+        );
+      }
 
       // Commit transaction
       await db.query('COMMIT');
@@ -1030,6 +1065,225 @@ const confirmDelivery = async (req, res) => {
   }
 };
 
+// Get order details by tracking token (public endpoint)
+const getOrderByTrackingToken = async (req, res) => {
+  try {
+    const { trackingToken } = req.params;
+
+    if (!trackingToken) {
+      return res.status(400).json({
+        success: false,
+        message: 'Tracking token is required',
+      });
+    }
+
+    // Fetch order details
+    const orderResult = await db.query(
+      `SELECT
+        o.id, o.order_number, o.total_amount, o.platform_fee, o.seller_amount,
+        o.status, o.payment_status, o.delivery_name, o.delivery_phone, o.delivery_address,
+        o.estimated_delivery_date, o.notes, o.delivered_at, o.created_at, o.buyer_email,
+        o.tracking_token, s.shop_name, s.shop_slug
+      FROM orders o
+      JOIN sellers s ON o.seller_id = s.id
+      WHERE o.tracking_token = $1`,
+      [trackingToken]
+    );
+
+    if (orderResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found',
+      });
+    }
+
+    const order = orderResult.rows[0];
+
+    // Fetch order items
+    const itemsResult = await db.query(
+      `SELECT
+        oi.id, oi.product_id, oi.product_name, oi.product_price,
+        oi.quantity, oi.subtotal, p.image_urls
+      FROM order_items oi
+      JOIN products p ON oi.product_id = p.id
+      WHERE oi.order_id = $1`,
+      [order.id]
+    );
+
+    order.items = itemsResult.rows;
+
+    res.json({
+      success: true,
+      data: { order },
+    });
+  } catch (error) {
+    console.error('Get order by tracking token error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch order details',
+      error: error.message,
+    });
+  }
+};
+
+// Confirm delivery by tracking token (guest/public)
+const confirmDeliveryByToken = async (req, res) => {
+  try {
+    const { trackingToken } = req.params;
+    const { feedback } = req.body;
+
+    if (!trackingToken) {
+      return res.status(400).json({
+        success: false,
+        message: 'Tracking token is required',
+      });
+    }
+
+    // Get order
+    const orderResult = await db.query(
+      'SELECT * FROM orders WHERE tracking_token = $1',
+      [trackingToken]
+    );
+
+    if (orderResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found',
+      });
+    }
+
+    const order = orderResult.rows[0];
+
+    // Check if already delivered
+    if (order.status === 'delivered') {
+      return res.status(400).json({
+        success: false,
+        message: 'Order already marked as delivered',
+      });
+    }
+
+    // Check if order is in transit
+    if (order.status !== 'in_transit') {
+      return res.status(400).json({
+        success: false,
+        message: 'Order must be in transit before confirming delivery',
+      });
+    }
+
+    // Update order status
+    await db.query(
+      `UPDATE orders
+       SET status = 'delivered',
+           delivered_at = CURRENT_TIMESTAMP,
+           payout_date = CURRENT_TIMESTAMP + INTERVAL '1 day',
+           payout_status = 'scheduled',
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = $1`,
+      [order.id]
+    );
+
+    // Record status change
+    await db.query(
+      `INSERT INTO order_status_history (order_id, old_status, new_status, changed_by, notes)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [order.id, order.status, 'delivered', null, feedback || 'Guest buyer confirmed delivery']
+    );
+
+    // Send notification to seller
+    const emailService = require('../services/emailService');
+    await emailService.sendOrderStatusUpdate(order, 'delivered');
+
+    res.json({
+      success: true,
+      message: 'Delivery confirmed successfully',
+    });
+  } catch (error) {
+    console.error('Confirm delivery by token error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to confirm delivery',
+      error: error.message,
+    });
+  }
+};
+
+// File guest dispute by order tracking token
+const createDisputeByToken = async (req, res) => {
+  try {
+    const { trackingToken } = req.params;
+    const { disputeType, description, evidenceUrls } = req.body;
+
+    if (!trackingToken || !disputeType || !description) {
+      return res.status(400).json({
+        success: false,
+        message: 'trackingToken, disputeType, and description are required',
+      });
+    }
+
+    // Get order and verify it's eligible for dispute
+    const orderResult = await db.query(
+      `SELECT id, seller_id, buyer_id, status, can_dispute, delivered_at
+       FROM orders
+       WHERE tracking_token = $1`,
+      [trackingToken]
+    );
+
+    if (orderResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found',
+      });
+    }
+
+    const order = orderResult.rows[0];
+
+    if (!order.can_dispute) {
+      return res.status(403).json({
+        success: false,
+        message: 'This order is not eligible for a dispute',
+      });
+    }
+
+    // Check no existing dispute for this order
+    const existing = await db.query('SELECT id FROM disputes WHERE order_id = $1', [order.id]);
+    if (existing.rows.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'A dispute already exists for this order',
+      });
+    }
+
+    // Insert dispute (buyer_id can be null for guests)
+    const result = await db.query(
+      `INSERT INTO disputes (order_id, buyer_id, seller_id, dispute_type, description, evidence_urls)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING *`,
+      [order.id, order.buyer_id || null, order.seller_id, disputeType, description, evidenceUrls || null]
+    );
+
+    const dispute = result.rows[0];
+
+    // Fire-and-forget: triage the dispute with AI
+    const aiService = require('../services/aiService');
+    setImmediate(() => {
+      aiService.triageDispute(dispute.id).catch(() => {});
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Dispute filed successfully',
+      data: { dispute },
+    });
+  } catch (error) {
+    console.error('Create dispute by token error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to file dispute',
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   createOrder,
   verifyPayment,
@@ -1044,4 +1298,7 @@ module.exports = {
   getSellerNotes,
   getOrderStatusHistory,
   confirmDelivery,
+  getOrderByTrackingToken,
+  confirmDeliveryByToken,
+  createDisputeByToken,
 };
