@@ -168,40 +168,26 @@ export default function SellerAnalytics() {
           {/* Left Col: Chart */}
           <div className="lg:col-span-8">
             <h2 className="text-4xl font-extrabold tracking-tight text-zinc-900 mb-16">Revenue Flow</h2>
-            <div className="h-[300px] flex items-end gap-1 sm:gap-2 relative">
-              {/* Subtle Grid Lines */}
-              <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
-                {[...Array(4)].map((_, i) => <div key={i} className="w-full border-t border-zinc-200" />)}
-              </div>
-              
-              {revenue_by_day?.length > 0 ? revenue_by_day.map((day, i) => {
+            <div className="space-y-4 max-h-[400px] overflow-y-auto pr-4">
+              {revenue_by_day?.length > 0 ? revenue_by_day.slice().reverse().map((day, i) => {
                 const val = parseFloat(day.revenue) || 0;
-                const heightPct = Math.max((val / maxRevenue) * 100, 2);
+                const widthPct = Math.max((val / maxRevenue) * 100, 2);
                 return (
-                  <div key={i} className="flex-1 flex justify-center group relative h-full items-end z-10">
-                    <div className="absolute -top-10 opacity-0 group-hover:opacity-100 bg-zinc-900 text-white text-xs font-bold px-3 py-2 rounded transition-opacity">
-                      {formatPrice(val)}
+                  <div key={i} className="flex items-center justify-between group">
+                    <div className="w-32 font-bold text-zinc-900 text-sm">{formatDate(day.date).split(',')[0]}</div>
+                    <div className="flex-1 mx-6 relative h-3 bg-zinc-100 rounded-full overflow-hidden">
+                      <div 
+                        className="absolute top-0 left-0 h-full bg-cinematic-dark transition-all duration-1000"
+                        style={{ width: `${widthPct}%` }}
+                      />
                     </div>
-                    <Motion.div 
-                      initial={{ height: 0 }}
-                      whileInView={{ height: `${heightPct}%` }}
-                      viewport={{ once: true, margin: "-100px" }}
-                      transition={{ duration: 1, ease: [0.16, 1, 0.3, 1], delay: i * 0.02 }}
-                      className="w-full bg-zinc-900 hover:bg-cinematic-dark transition-colors"
-                    />
+                    <div className="w-32 text-right font-black text-zinc-900 text-sm">{formatPrice(val)}</div>
                   </div>
                 );
               }) : (
-                <div className="w-full h-full flex items-center justify-center text-zinc-400 font-medium">No revenue data available</div>
+                <div className="w-full py-12 flex items-center justify-center text-zinc-400 font-medium">No revenue data available</div>
               )}
             </div>
-            {/* Chart legend / dates */}
-            {revenue_by_day?.length > 0 && (
-              <div className="flex justify-between mt-4 text-xs font-bold text-zinc-400 uppercase tracking-widest">
-                <span>{formatDate(revenue_by_day[0].date)}</span>
-                <span>{formatDate(revenue_by_day[revenue_by_day.length - 1].date)}</span>
-              </div>
-            )}
           </div>
 
           {/* Right Col: Secondary Stats */}

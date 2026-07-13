@@ -51,6 +51,10 @@ export default function ProductDetail() {
         setError('Product not found');
       } else {
         setProduct(foundProduct);
+        // Track product view silently for analytics
+        if (foundProduct.id) {
+          productService.getProductById(foundProduct.id).catch(e => console.error('Failed to track view', e));
+        }
       }
     } catch (err) {
       console.error('Error fetching product:', err);

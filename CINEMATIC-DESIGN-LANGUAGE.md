@@ -1,3 +1,4 @@
+
 # Cinematic Design Language — Scroll-Driven Editorial Pages
 
 A portable reference for building cinematic, editorial, visual-first landing pages. Think Apple/Nike product launches — NOT generic SaaS templates. Every section is a magazine spread told through full-bleed photography, bold typography, and scroll-driven animations.
