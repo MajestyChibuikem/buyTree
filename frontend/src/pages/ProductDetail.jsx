@@ -53,7 +53,7 @@ export default function ProductDetail() {
         setProduct(foundProduct);
         // Track product view silently for analytics
         if (foundProduct.id) {
-          productService.getProductById(foundProduct.id).catch(e => console.error('Failed to track view', e));
+          productService.trackProductView(foundProduct.id).catch(e => console.error('Failed to track view', e));
         }
       }
     } catch (err) {

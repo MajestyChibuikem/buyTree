@@ -4,6 +4,7 @@ const {
   createProduct,
   getProducts,
   getProductById,
+  trackProductView,
   updateProduct,
   deleteProduct,
   getMyProducts,
@@ -18,6 +19,7 @@ router.get('/', cacheMiddleware(300), getProducts); // Get all products with fil
 router.get('/search', cacheMiddleware(180), searchProducts); // Search products across all shops - 3 min cache
 router.get('/shop/:shopSlug', cacheMiddleware(300), getProductsByShopSlug); // Get products by shop slug - 5 min cache
 router.get('/:id', cacheMiddleware(600), getProductById); // Get single product - 10 min cache
+router.post('/:id/view', trackProductView); // Track product view (uncached write operation)
 
 // Protected routes (require authentication)
 router.post('/', authenticateToken, createProduct); // Create product (sellers only)

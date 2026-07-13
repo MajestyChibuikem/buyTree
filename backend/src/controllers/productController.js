@@ -206,15 +206,6 @@ const getProductById = async (req, res) => {
       });
     }
 
-    // Track product view for analytics
-    await db.query(
-      `INSERT INTO product_analytics (product_id, date, views)
-       VALUES ($1, CURRENT_DATE, 1)
-       ON CONFLICT (product_id, date)
-       DO UPDATE SET views = product_analytics.views + 1`,
-      [id]
-    );
-
     res.json({
       success: true,
       data: { product: result.rows[0] },
@@ -228,6 +219,48 @@ const getProductById = async (req, res) => {
     });
   }
 };
+
+// Track product view for analytics (public endpoint, POST)
+const trackProductView = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Check if product exists
+    const result = await db.query(
+      'SELECT id FROM products WHERE id = $1 AND deleted_at IS NULL',
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found',
+      });
+    }
+
+    // Increment view count in database
+    await db.query(
+      `INSERT INTO product_analytics (product_id, date, views)
+       VALUES ($1, CURRENT_DATE, 1)
+       ON CONFLICT (product_id, date)
+       DO UPDATE SET views = product_analytics.views + 1`,
+      [id]
+    );
+
+    res.json({
+      success: true,
+      message: 'Product view tracked successfully',
+    });
+  } catch (error) {
+    console.error('Track product view error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to track view',
+      error: error.message,
+    });
+  }
+};
+
 
 // Update product (seller's own products only)
 const updateProduct = async (req, res) => {
@@ -658,6 +691,7 @@ module.exports = {
   createProduct,
   getProducts,
   getProductById,
+  trackProductView,
   updateProduct,
   deleteProduct,
   getMyProducts,

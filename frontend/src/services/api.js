@@ -131,6 +131,11 @@ export const productService = {
     return response.data;
   },
 
+  trackProductView: async (id) => {
+    const response = await mutate('post', `/products/${id}/view`);
+    return response.data;
+  },
+
   getMyProducts: async () => {
     const response = await cachedGet('/products/my/products');
     return response.data;
