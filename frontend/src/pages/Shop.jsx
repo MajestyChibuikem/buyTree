@@ -253,7 +253,7 @@ export default function Shop() {
         </nav>
 
         {/* HERO SECTION - Full Bleed Cinematic */}
-        <header className="relative w-full h-[60vh] lg:h-[70vh] bg-black overflow-hidden flex items-end">
+        <header className="relative w-full h-[40vh] lg:h-[50vh] bg-black overflow-hidden flex items-end">
            {shop.shop_cover_url ? (
              <img 
                src={shop.shop_cover_url} 
@@ -266,7 +266,7 @@ export default function Shop() {
            )}
            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
            
-           <div className="relative z-10 w-full px-6 lg:px-12 pb-12 lg:pb-24 max-w-7xl mx-auto flex flex-col md:flex-row md:items-end justify-between gap-8">
+           <div className="relative z-10 w-full px-6 lg:px-12 pb-8 lg:pb-16 max-w-7xl mx-auto flex flex-col md:flex-row md:items-end justify-between gap-8">
              <div className="max-w-4xl">
                 <Motion.h1 
                   initial={{ y: 30, opacity: 0 }}
