@@ -9,6 +9,7 @@ export default function PaymentCallback() {
   const { clearCart, refreshCart } = useCart();
   const [status, setStatus] = useState('verifying'); // verifying, success, failed
   const [orderData, setOrderData] = useState(null);
+  const [trackingToken, setTrackingToken] = useState(null);
 
   useEffect(() => {
     const verifyPayment = async () => {
@@ -26,15 +27,25 @@ export default function PaymentCallback() {
           setStatus('success');
           setOrderData(response.data);
 
+          const firstOrder = response.data?.orders?.[0];
+          const token = firstOrder?.trackingToken;
+          if (token) {
+            setTrackingToken(token);
+          }
+
           // Clear the cart after successful payment
           await clearCart();
 
           // Also refresh cart to sync with server
           await refreshCart();
 
-          // Redirect to orders page after 3 seconds
+          // Redirect to orders or tracking page after 3 seconds
           setTimeout(() => {
-            navigate('/orders');
+            if (token) {
+              navigate(`/orders/track/${token}`);
+            } else {
+              navigate('/orders');
+            }
           }, 3000);
         } else {
           setStatus('failed');
@@ -101,14 +112,14 @@ export default function PaymentCallback() {
             )}
 
             <p className="mt-6 text-sm text-gray-500">
-              Redirecting to your orders...
+              {trackingToken ? 'Redirecting to your order tracking...' : 'Redirecting to your orders...'}
             </p>
 
             <button
-              onClick={() => navigate('/orders')}
+              onClick={() => navigate(trackingToken ? `/orders/track/${trackingToken}` : '/orders')}
               className="mt-4 w-full px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors"
             >
-              View Orders
+              {trackingToken ? 'Track Order' : 'View Orders'}
             </button>
           </div>
         </div>

@@ -1114,7 +1114,7 @@ const getOrderByTrackingToken = async (req, res) => {
 
     res.json({
       success: true,
-      data: { order },
+      data: order,
     });
   } catch (error) {
     console.error('Get order by tracking token error:', error);

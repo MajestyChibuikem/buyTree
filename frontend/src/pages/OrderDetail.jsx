@@ -5,7 +5,7 @@ import { orderService } from '../services/api';
 import { motion as Motion } from 'framer-motion';
 
 export default function OrderDetail() {
-  const { orderId } = useParams();
+  const { orderId, trackingToken } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [order, setOrder] = useState(null);
@@ -18,12 +18,15 @@ export default function OrderDetail() {
 
   useEffect(() => {
     fetchOrderDetails();
-  }, [orderId]);
+  }, [orderId, trackingToken]);
 
   const fetchOrderDetails = async () => {
     try {
       setLoading(true);
-      const response = await orderService.getOrderDetails(orderId);
+      setError('');
+      const response = trackingToken
+        ? await orderService.getOrderByTrackingToken(trackingToken)
+        : await orderService.getOrderDetails(orderId);
       setOrder(response.data);
     } catch (error) {
       console.error('Failed to fetch order:', error);
@@ -68,7 +71,11 @@ export default function OrderDetail() {
         rating,
         feedback: feedback.trim(),
       };
-      await orderService.confirmDelivery(orderId, feedbackData);
+      if (trackingToken) {
+        await orderService.confirmDeliveryByToken(trackingToken, feedbackData);
+      } else {
+        await orderService.confirmDelivery(orderId, feedbackData);
+      }
       setShowConfirmModal(false);
       await fetchOrderDetails();
       alert('Delivery confirmed successfully! Thank you for your feedback.');
@@ -117,10 +124,10 @@ export default function OrderDetail() {
           <h3 className="text-2xl font-black text-zinc-900 mb-2">Order Not Found</h3>
           <p className="text-zinc-500 font-medium mb-12">{error || 'This order does not exist or you do not have access to it.'}</p>
           <button
-            onClick={() => navigate('/orders')}
+            onClick={() => navigate(user ? '/orders' : '/')}
             className="w-full px-8 py-4 bg-zinc-900 text-white font-black uppercase tracking-widest text-xs hover:bg-cinematic-dark transition-colors"
           >
-            Back to Orders
+            {user ? 'Back to Orders' : 'Back to Home'}
           </button>
         </div>
       </div>
@@ -137,13 +144,13 @@ export default function OrderDetail() {
           <div className="flex justify-between items-center h-12">
             <div className="flex items-center gap-6">
               <button
-                onClick={() => navigate('/orders')}
+                onClick={() => navigate(user ? '/orders' : '/')}
                 className="hover:text-cinematic-dark transition-colors flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-zinc-500"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
-                Back to Orders
+                {user ? 'Back to Orders' : 'Back to Home'}
               </button>
               <div className="hidden sm:block w-px h-6 bg-zinc-200"></div>
               <div className="hidden sm:block text-xl font-black tracking-tighter text-zinc-900 uppercase">

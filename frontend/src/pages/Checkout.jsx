@@ -24,6 +24,7 @@ export default function Checkout() {
     }
     return {
       name: '',
+      email: '',
       phone: '',
       address: '',
       notes: '',
@@ -84,6 +85,7 @@ export default function Checkout() {
     try {
       const toSave = {
         name: updated.name,
+        email: updated.email || '',
         phone: updated.phone,
         address: updated.address,
         notes: '',
@@ -98,6 +100,17 @@ export default function Checkout() {
     if (!deliveryDetails.name.trim()) {
       alert('Please enter your full name');
       return false;
+    }
+    if (!user) {
+      if (!deliveryDetails.email || !deliveryDetails.email.trim()) {
+        alert('Please enter your email address');
+        return false;
+      }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(deliveryDetails.email.trim())) {
+        alert('Please enter a valid email address');
+        return false;
+      }
     }
     if (!deliveryDetails.phone.trim()) {
       alert('Please enter your phone number');
@@ -247,6 +260,27 @@ export default function Checkout() {
                   </label>
                 </div>
               </div>
+
+              {!user && (
+                <div className="relative">
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    value={deliveryDetails.email || ''}
+                    onChange={handleInputChange}
+                    placeholder=" "
+                    className="block w-full bg-transparent border-0 border-b-2 border-zinc-200 py-3 text-lg font-bold text-zinc-900 focus:ring-0 focus:border-cinematic-dark peer transition-colors"
+                    required
+                  />
+                  <label 
+                    htmlFor="email" 
+                    className="absolute left-0 top-3 text-sm font-bold uppercase tracking-widest text-zinc-400 transition-all peer-focus:-top-6 peer-focus:text-xs peer-focus:text-cinematic-dark peer-[:not(:placeholder-shown)]:-top-6 peer-[:not(:placeholder-shown)]:text-xs peer-[:not(:placeholder-shown)]:text-zinc-900"
+                  >
+                    Email Address (For Order Tracking) *
+                  </label>
+                </div>
+              )}
 
               <div className="relative">
                 <textarea
