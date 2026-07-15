@@ -461,6 +461,8 @@ const markReviewHelpful = async (req, res) => {
 };
 
 // Seller response to review
+const addSellerResponse = async (req, res) => {
+  try {
     // Resolve seller ID from sellers table
     const sellerResult = await db.query(
       'SELECT id FROM sellers WHERE user_id = $1',
