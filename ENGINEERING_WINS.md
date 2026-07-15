@@ -135,3 +135,48 @@ The result?
 Sellers can snap photos of their products on their iPhones and upload them seamlessly. 
 The backend only ever receives highly compatible, compressed JPEGs. 
 No broken images, no frustrated users, zero server overhead. 🚀✨
+
+---
+
+## 🧵 Thread 3: Why we deleted Customer Accounts and built a stateless, passwordless Order History
+
+**Tweet 1:**
+We completely deleted customer (buyer) signup, login, and profile pages from our white-label e-commerce platform. ❌📲
+
+Here is why forcing customers to create accounts is an anti-pattern for independent shops, and how we built a secure, passwordless history lookup using URL math. 👇 🧵
+
+**Tweet 2:**
+BuyTree is e-commerce infrastructure (like Shopify). Customers buy directly from independent shops. 
+
+Forcing a customer to register an account just to buy a single item adds massive checkout friction. But forcing a centralized "BuyTree Account" is even worse—it breaks the white-label merchant illusion.
+
+**Tweet 3:**
+So we removed buyer accounts. But how do buyers:
+1. Track their shipping status?
+2. File disputes?
+3. View their past order history?
+
+The classic answer is browser local storage. But local storage fails if they switch from mobile to desktop or clear their cookies. We needed a device-agnostic solution.
+
+**Tweet 4:**
+The solution: stateless, email-encoded tracking tokens.
+
+When an order is created, we encrypt/obfuscate the customer's email address using a lightweight XOR cipher with a backend secret key, then encode it to hex. 
+
+We generate a tracking token: `BT-<rand_hex>-<encoded_email>`.
+
+**Tweet 5:**
+When the customer clicks the link in their receipt email, they hit `/orders/track/:trackingToken`.
+
+The server:
+1. Decodes the email address directly from the token string.
+2. Finds the active order.
+3. Automatically queries the database for ALL orders matching that email address.
+
+**Tweet 6:**
+The result is pure UX magic. 🌟
+- The user clicks their email receipt link and instantly views their current order details.
+- Alongside it, they see a clean sidebar with their entire order history (past receipts, statuses).
+- Zero logins, zero passwords, zero cookies, and completely secure because the token acts as a signed lookup key.
+
+Sometimes simplifying your database schema is the ultimate user experience win. 🏗️✨
