@@ -145,14 +145,14 @@ const login = async (req, res) => {
     }
 
     // Check if user is a seller
-    let sellerId = null;
+    let seller = null;
     if (user.role === 'seller' || user.role === 'both') {
       const sellerResult = await db.query(
-        'SELECT id FROM sellers WHERE user_id = $1',
+        'SELECT id, shop_name, shop_slug, is_verified FROM sellers WHERE user_id = $1',
         [user.id]
       );
       if (sellerResult.rows.length > 0) {
-        sellerId = sellerResult.rows[0].id;
+        seller = sellerResult.rows[0];
       }
     }
 
@@ -169,7 +169,7 @@ const login = async (req, res) => {
           lastName: user.last_name,
           phone: user.phone,
           role: user.role,
-          sellerId
+          seller
         },
         token
       }

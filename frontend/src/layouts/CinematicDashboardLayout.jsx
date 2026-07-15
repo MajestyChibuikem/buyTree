@@ -7,10 +7,17 @@ import { useAuth } from '../context/AuthContext';
 export default function CinematicDashboardLayout({ children }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout } = useAuth();
+  const { user, logout, refreshUser } = useAuth();
   
   // Default to open based on user preference
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  // Automatically refresh user if logged in but seller details are missing
+  useEffect(() => {
+    if (user && !user?.seller?.shop_slug && refreshUser) {
+      refreshUser();
+    }
+  }, [user, refreshUser]);
 
   // Initialize Lenis for buttery smooth scrolling across the dashboard
   useEffect(() => {

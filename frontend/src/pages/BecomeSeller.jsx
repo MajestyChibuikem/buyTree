@@ -17,7 +17,7 @@ const CATEGORIES = [
 
 export default function BecomeSeller() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
 
   const [formData, setFormData] = useState({
     shopName: '',
@@ -101,6 +101,7 @@ export default function BecomeSeller() {
     try {
       const response = await sellerService.registerSeller(formData);
       setAccountName(response.data.accountName);
+      await refreshUser();
 
       // Show success and redirect
       setTimeout(() => {

@@ -79,6 +79,18 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const refreshUser = async () => {
+    try {
+      const response = await authService.getMe();
+      setUser(response.data.user);
+      localStorage.setItem('user', JSON.stringify(response.data.user));
+      return { success: true, user: response.data.user };
+    } catch (error) {
+      console.error('Failed to refresh user:', error);
+      return { success: false, error };
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -91,6 +103,7 @@ export const AuthProvider = ({ children }) => {
     login,
     signup,
     logout,
+    refreshUser,
     isAuthenticated: !!user,
   };
 
