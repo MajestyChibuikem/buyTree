@@ -357,33 +357,7 @@ export const reviewService = {
   },
 };
 
-// Favorite endpoints
-export const favoriteService = {
-  getUserFavorites: async () => {
-    const response = await cachedGet('/favorites');
-    return response.data;
-  },
 
-  addFavorite: async (productId) => {
-    const response = await mutate('post', '/favorites/add', { productId });
-    return response.data;
-  },
-
-  removeFavorite: async (productId) => {
-    const response = await mutate('delete', `/favorites/remove/${productId}`);
-    return response.data;
-  },
-
-  checkFavorite: async (productId) => {
-    const response = await cachedGet(`/favorites/check/${productId}`);
-    return response.data;
-  },
-
-  batchCheckFavorites: async (productIds) => {
-    const response = await mutate('post', '/favorites/batch-check', { productIds });
-    return response.data;
-  },
-};
 
 // AI endpoints
 export const aiService = {

@@ -24,7 +24,6 @@ import Orders from './pages/Orders';
 import OrderDetail from './pages/OrderDetail';
 import SellerOrders from './pages/SellerOrders';
 import SellerOrderManagement from './pages/SellerOrderManagement';
-import Favorites from './pages/Favorites';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminSellers from './pages/AdminSellers';
 import AdminOrders from './pages/AdminOrders';
@@ -73,32 +72,8 @@ function App() {
           <Route path="/payment/callback" element={<PaymentCallback />} />
           {/* Public Order tracking page for guest orders */}
           <Route path="/orders/track/:trackingToken" element={<OrderDetail />} />
-          {/* Orders - requires auth */}
-          <Route
-            path="/orders"
-            element={
-              <ProtectedRoute>
-                <Orders />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/orders/:orderId"
-            element={
-              <ProtectedRoute>
-                <OrderDetail />
-              </ProtectedRoute>
-            }
-          />
-          {/* Favorites - requires auth */}
-          <Route
-            path="/favorites"
-            element={
-              <ProtectedRoute>
-                <Favorites />
-              </ProtectedRoute>
-            }
-          />
+          {/* Orders - public guest dashboard & lookup */}
+          <Route path="/orders" element={<Orders />} />
           {/* V2 Features - Commented out for v1 (store-centric focus) */}
           {/* <Route path="/products" element={<Products />} /> */}
           {/* <Route path="/products/:id" element={<ProductDetail />} /> */}

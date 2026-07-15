@@ -200,40 +200,37 @@ export default function Shop() {
           </div>
           
           <div className="flex items-center gap-4 pointer-events-auto">
-            {user ? (
-              <div className="flex items-center gap-4 bg-white/10 backdrop-blur-md px-2 py-2 border border-white/20 rounded-full">
-                <span className="text-white/80 text-xs font-bold tracking-widest uppercase pl-4 pr-2 hidden md:block">
-                  {user.firstName}
-                </span>
+            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-2 py-2 border border-white/20 rounded-full">
+              <button
+                onClick={() => navigate('/orders')}
+                className="px-4 py-2 text-white hover:bg-white/10 rounded-full text-xs font-bold tracking-widest uppercase transition-colors"
+              >
+                Track Order
+              </button>
+              {user ? (
+                <>
+                  <button
+                    onClick={() => navigate(user.role === 'admin' ? '/admin/dashboard' : '/seller/dashboard')}
+                    className="px-4 py-2 text-white hover:bg-white/10 rounded-full text-xs font-bold tracking-widest uppercase transition-colors"
+                  >
+                    Dashboard
+                  </button>
+                  <button
+                    onClick={logout}
+                    className="px-4 py-2 text-white/60 hover:text-white hover:bg-white/10 rounded-full text-xs font-bold tracking-widest uppercase transition-colors"
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
                 <button
-                  onClick={() => navigate('/orders')}
+                  onClick={() => navigate('/login')}
                   className="px-4 py-2 text-white hover:bg-white/10 rounded-full text-xs font-bold tracking-widest uppercase transition-colors"
                 >
-                  Orders
+                  Seller Login
                 </button>
-                <button
-                  onClick={logout}
-                  className="px-4 py-2 text-white/60 hover:text-white hover:bg-white/10 rounded-full text-xs font-bold tracking-widest uppercase transition-colors"
-                >
-                  Logout
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-2 py-2 border border-white/20 rounded-full">
-                <button
-                  onClick={() => navigate(`/login?shopSlug=${shopSlug}`)}
-                  className="px-6 py-2 text-white hover:bg-white/10 rounded-full text-xs font-bold tracking-widest uppercase transition-colors"
-                >
-                  Login
-                </button>
-                <button
-                  onClick={() => navigate(`/signup?shopSlug=${shopSlug}`)}
-                  className="px-6 py-2 bg-white text-zinc-900 hover:bg-cinematic-light rounded-full text-xs font-bold tracking-widest uppercase transition-colors"
-                >
-                  Sign Up
-                </button>
-              </div>
-            )}
+              )}
+            </div>
 
             <button
               onClick={() => navigate('/cart')}

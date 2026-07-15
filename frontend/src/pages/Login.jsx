@@ -15,7 +15,7 @@ export default function Login() {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [authMode, setAuthMode] = useState('customer'); // 'customer' | 'seller'
+  const [authMode, setAuthMode] = useState('seller'); // default to seller
 
   // Shop branding state
   const shopSlug = searchParams.get('shopSlug');
@@ -74,61 +74,22 @@ export default function Login() {
 
   return (
     <CinematicAuthLayout 
-      title={shop ? `Welcome to ${shop.shop_name}.` : (authMode === 'seller' ? "Welcome Back, Creator." : "Welcome Back.")}
-      subtitle={shop ? "Sign in to continue your shopping." : (authMode === 'seller' ? "Access your dashboard to manage your white-label empire." : "Log in to track your orders and shop easily.")}
-      imageSrc={shop?.shop_cover_url || (authMode === 'seller' ? "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80" : "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80")}
+      title="Welcome Back, Creator."
+      subtitle="Access your dashboard to manage your white-label empire."
+      imageSrc="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80"
     >
       <div>
-        {!shop && (
-          <div className="flex bg-zinc-900 p-1 rounded-lg mb-8 w-fit border border-zinc-800 relative z-20">
-            <button 
-              type="button"
-              onClick={() => setAuthMode('customer')}
-              className={`px-6 py-2 rounded-md text-sm font-bold transition-all ${authMode === 'customer' ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}
-            >
-              Customer
-            </button>
-            <button 
-              type="button"
-              onClick={() => setAuthMode('seller')}
-              className={`px-6 py-2 rounded-md text-sm font-bold transition-all ${authMode === 'seller' ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}
-            >
-              Seller
-            </button>
-          </div>
-        )}
-        {shop ? (
-          <div className="mb-8">
-            {shop.shop_logo_url && (
-              <img
-                src={shop.shop_logo_url}
-                alt={shop.shop_name}
-                className="h-16 w-16 mb-6 rounded-full object-cover border border-zinc-800"
-              />
-            )}
-            <h2 className="text-3xl font-semibold text-white mb-2">
-              Sign in
-            </h2>
-            <p className="text-zinc-400 mb-6">
-              New to {shop.shop_name}?{' '}
-              <Link to={`/signup?shopSlug=${shopSlug}`} className="text-cinematic-light hover:text-white transition-colors underline-offset-4 hover:underline">
-                Create an account
-              </Link>
-            </p>
-          </div>
-        ) : (
-          <div className="mb-10">
-            <h2 className="text-4xl font-bold text-white mb-3">
-              Log in
-            </h2>
-            <p className="text-zinc-400">
-              Don't have an account?{' '}
-              <Link to="/signup" className="text-cinematic-light hover:text-white transition-colors underline-offset-4 hover:underline">
-                Sign up
-              </Link>
-            </p>
-          </div>
-        )}
+        <div className="mb-10">
+          <h2 className="text-4xl font-bold text-white mb-3">
+            Seller Login
+          </h2>
+          <p className="text-zinc-400">
+            Don't have a seller account?{' '}
+            <Link to="/signup" className="text-cinematic-light hover:text-white transition-colors underline-offset-4 hover:underline">
+              Sign up
+            </Link>
+          </p>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {error && (
