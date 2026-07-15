@@ -1,11 +1,39 @@
 const db = require('../config/database');
 const aiService = require('../services/aiService');
 
+// Recalculate and update the overall seller rating and reviews count
+const updateSellerRating = async (sellerId) => {
+  try {
+    const statsResult = await db.query(
+      `SELECT 
+        COALESCE(AVG(r.rating), 0) as average_rating,
+        COUNT(r.id) as total_reviews
+       FROM reviews r
+       JOIN products p ON r.product_id = p.id
+       WHERE p.seller_id = $1`,
+      [sellerId]
+    );
+    
+    const { average_rating, total_reviews } = statsResult.rows[0];
+    
+    await db.query(
+      `UPDATE sellers
+       SET rating = $1,
+           total_reviews = $2,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = $3`,
+      [parseFloat(average_rating).toFixed(2), parseInt(total_reviews), sellerId]
+    );
+  } catch (error) {
+    console.error('Failed to update seller rating:', error);
+  }
+};
+
 // Create a review
 const createReview = async (req, res) => {
   try {
-    const buyerId = req.user.id;
-    const { productId, orderId, rating, title, comment, images } = req.body;
+    const userId = req.user ? req.user.id : null;
+    const { productId, orderId, rating, title, comment, images, trackingToken, displayName } = req.body;
 
     // Validate required fields
     if (!productId || !orderId || !rating) {
@@ -23,26 +51,45 @@ const createReview = async (req, res) => {
       });
     }
 
-    // Verify the purchase
-    const orderCheck = await db.query(
-      `SELECT o.id, o.buyer_id, oi.product_id
-       FROM orders o
-       JOIN order_items oi ON o.id = oi.order_id
-       WHERE o.id = $1 AND o.buyer_id = $2 AND oi.product_id = $3 AND o.payment_status = 'paid'`,
-      [orderId, buyerId, productId]
-    );
+    // Verify the purchase and get the order details
+    let purchaseCheck;
+    if (userId) {
+      purchaseCheck = await db.query(
+        `SELECT o.id, o.seller_id
+         FROM orders o
+         JOIN order_items oi ON o.id = oi.order_id
+         WHERE o.id = $1 AND o.buyer_id = $2 AND oi.product_id = $3 AND o.payment_status = 'paid'`,
+        [orderId, userId, productId]
+      );
+    } else {
+      if (!trackingToken) {
+        return res.status(401).json({
+          success: false,
+          message: 'Tracking token is required for guest review submission',
+        });
+      }
+      purchaseCheck = await db.query(
+        `SELECT o.id, o.seller_id
+         FROM orders o
+         JOIN order_items oi ON o.id = oi.order_id
+         WHERE o.id = $1 AND o.tracking_token = $2 AND oi.product_id = $3 AND o.payment_status = 'paid'`,
+        [orderId, trackingToken, productId]
+      );
+    }
 
-    if (orderCheck.rows.length === 0) {
+    if (purchaseCheck.rows.length === 0) {
       return res.status(403).json({
         success: false,
         message: 'You can only review products you have purchased',
       });
     }
 
+    const sellerId = purchaseCheck.rows[0].seller_id;
+
     // Check if review already exists for this order
     const existingReview = await db.query(
-      'SELECT id FROM reviews WHERE product_id = $1 AND buyer_id = $2 AND order_id = $3',
-      [productId, buyerId, orderId]
+      'SELECT id FROM reviews WHERE product_id = $1 AND order_id = $2',
+      [productId, orderId]
     );
 
     if (existingReview.rows.length > 0) {
@@ -54,11 +101,25 @@ const createReview = async (req, res) => {
 
     // Create review
     const result = await db.query(
-      `INSERT INTO reviews (product_id, buyer_id, order_id, rating, title, comment, images)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `INSERT INTO reviews (product_id, buyer_id, order_id, rating, title, comment, images, display_name)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING *`,
-      [productId, buyerId, orderId || null, rating, title || null, comment || null, images || null]
+      [
+        productId,
+        userId || null,
+        orderId,
+        rating,
+        title || null,
+        comment || null,
+        images || null,
+        displayName || null
+      ]
     );
+
+    // Recalculate seller rating in the background
+    setImmediate(() => {
+      updateSellerRating(sellerId).catch(() => {});
+    });
 
     // Fire-and-forget: analyze review authenticity in the background
     const review = result.rows[0];
@@ -120,9 +181,10 @@ const getProductReviews = async (req, res) => {
         r.*,
         u.first_name,
         u.last_name,
+        COALESCE(r.display_name, u.first_name || ' ' || u.last_name, 'Guest') as reviewer_name,
         CASE WHEN rh.user_id IS NOT NULL THEN true ELSE false END as marked_helpful_by_user
       FROM reviews r
-      JOIN users u ON r.buyer_id = u.id
+      LEFT JOIN users u ON r.buyer_id = u.id
       LEFT JOIN review_helpful rh ON r.id = rh.review_id AND rh.user_id = $${queryParams.length + 1}
       ${whereClause}
       ${orderClause}
@@ -278,6 +340,18 @@ const updateReview = async (req, res) => {
       values
     );
 
+    // Recalculate seller rating in the background
+    const sellerResult = await db.query(
+      'SELECT p.seller_id FROM reviews r JOIN products p ON r.product_id = p.id WHERE r.id = $1',
+      [reviewId]
+    );
+    const sellerId = sellerResult.rows[0]?.seller_id;
+    if (sellerId) {
+      setImmediate(() => {
+        updateSellerRating(sellerId).catch(() => {});
+      });
+    }
+
     res.json({
       success: true,
       message: 'Review updated successfully',
@@ -299,6 +373,13 @@ const deleteReview = async (req, res) => {
     const buyerId = req.user.id;
     const { reviewId } = req.params;
 
+    // Get seller ID before deletion
+    const sellerResult = await db.query(
+      'SELECT p.seller_id FROM reviews r JOIN products p ON r.product_id = p.id WHERE r.id = $1',
+      [reviewId]
+    );
+    const sellerId = sellerResult.rows[0]?.seller_id;
+
     const result = await db.query(
       'DELETE FROM reviews WHERE id = $1 AND buyer_id = $2 RETURNING id',
       [reviewId, buyerId]
@@ -308,6 +389,13 @@ const deleteReview = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: 'Review not found or unauthorized',
+      });
+    }
+
+    // Recalculate seller rating in the background
+    if (sellerId) {
+      setImmediate(() => {
+        updateSellerRating(sellerId).catch(() => {});
       });
     }
 
@@ -373,9 +461,20 @@ const markReviewHelpful = async (req, res) => {
 };
 
 // Seller response to review
-const addSellerResponse = async (req, res) => {
-  try {
-    const sellerId = req.user.id;
+    // Resolve seller ID from sellers table
+    const sellerResult = await db.query(
+      'SELECT id FROM sellers WHERE user_id = $1',
+      [req.user.id]
+    );
+
+    if (sellerResult.rows.length === 0) {
+      return res.status(403).json({
+        success: false,
+        message: 'Only registered sellers can respond to reviews',
+      });
+    }
+
+    const sellerId = sellerResult.rows[0].id;
     const { reviewId } = req.params;
     const { response } = req.body;
 

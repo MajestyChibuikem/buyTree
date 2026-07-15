@@ -111,9 +111,16 @@ const getProducts = async (req, res) => {
       SELECT
         p.id, p.name, p.description, p.price, p.quantity_available,
         p.category, p.image_urls, p.created_at,
-        s.id as seller_id, s.shop_name, s.shop_slug, s.rating
+        s.id as seller_id, s.shop_name, s.shop_slug, s.rating,
+        COALESCE(avg_r.average_rating, 0) as average_rating,
+        COALESCE(avg_r.reviews_count, 0) as reviews_count
       FROM products p
       JOIN sellers s ON p.seller_id = s.id
+      LEFT JOIN (
+        SELECT product_id, AVG(rating) as average_rating, COUNT(id) as reviews_count
+        FROM reviews
+        GROUP BY product_id
+      ) avg_r ON p.id = avg_r.product_id
       WHERE p.deleted_at IS NULL AND p.quantity_available > 0
     `;
     const params = [];
@@ -192,9 +199,16 @@ const getProductById = async (req, res) => {
       `SELECT
         p.id, p.name, p.description, p.price, p.quantity_available,
         p.category, p.image_urls, p.created_at,
-        s.id as seller_id, s.shop_name, s.shop_slug, s.rating
+        s.id as seller_id, s.shop_name, s.shop_slug, s.rating,
+        COALESCE(avg_r.average_rating, 0) as average_rating,
+        COALESCE(avg_r.reviews_count, 0) as reviews_count
       FROM products p
       JOIN sellers s ON p.seller_id = s.id
+      LEFT JOIN (
+        SELECT product_id, AVG(rating) as average_rating, COUNT(id) as reviews_count
+        FROM reviews
+        GROUP BY product_id
+      ) avg_r ON p.id = avg_r.product_id
       WHERE p.id = $1 AND p.deleted_at IS NULL`,
       [id]
     );
@@ -522,8 +536,15 @@ const getProductsByShopSlug = async (req, res) => {
     let query = `
       SELECT
         p.id, p.name, p.slug, p.description, p.price, p.quantity_available,
-        p.category, p.image_urls, p.created_at
+        p.category, p.image_urls, p.created_at,
+        COALESCE(avg_r.average_rating, 0) as average_rating,
+        COALESCE(avg_r.reviews_count, 0) as reviews_count
       FROM products p
+      LEFT JOIN (
+        SELECT product_id, AVG(rating) as average_rating, COUNT(id) as reviews_count
+        FROM reviews
+        GROUP BY product_id
+      ) avg_r ON p.id = avg_r.product_id
       WHERE p.seller_id = $1 AND p.deleted_at IS NULL AND p.quantity_available > 0
     `;
     const params = [sellerId];
@@ -597,9 +618,16 @@ const searchProducts = async (req, res) => {
       SELECT
         p.id, p.name, p.slug, p.description, p.price, p.quantity_available,
         p.category, p.image_urls, p.created_at,
-        s.id as seller_id, s.shop_name, s.shop_slug, s.rating as shop_rating, s.is_verified
+        s.id as seller_id, s.shop_name, s.shop_slug, s.rating as shop_rating, s.is_verified,
+        COALESCE(avg_r.average_rating, 0) as average_rating,
+        COALESCE(avg_r.reviews_count, 0) as reviews_count
       FROM products p
       JOIN sellers s ON p.seller_id = s.id
+      LEFT JOIN (
+        SELECT product_id, AVG(rating) as average_rating, COUNT(id) as reviews_count
+        FROM reviews
+        GROUP BY product_id
+      ) avg_r ON p.id = avg_r.product_id
       WHERE p.deleted_at IS NULL AND p.quantity_available > 0
     `;
 

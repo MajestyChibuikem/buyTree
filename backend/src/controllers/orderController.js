@@ -2,6 +2,26 @@ const db = require('../config/database');
 const axios = require('axios');
 const crypto = require('crypto');
 
+const secretKey = 'buytree_secret';
+
+const encodeEmail = (email) => {
+  if (!email) return '';
+  const buffer = Buffer.from(email.toLowerCase().trim(), 'utf8');
+  const encoded = buffer.map((b, i) => b ^ secretKey.charCodeAt(i % secretKey.length));
+  return encoded.toString('hex');
+};
+
+const decodeEmail = (hex) => {
+  try {
+    if (!hex) return null;
+    const buffer = Buffer.from(hex, 'hex');
+    const decoded = buffer.map((b, i) => b ^ secretKey.charCodeAt(i % secretKey.length));
+    return decoded.toString('utf8');
+  } catch (e) {
+    return null;
+  }
+};
+
 // Initialize Paystack payment
 const createOrder = async (req, res) => {
   try {
@@ -262,8 +282,8 @@ const verifyPayment = async (req, res) => {
         // Generate order number
         const orderNumber = `ORD-${Date.now()}-${sellerId}`;
 
-        // Generate secure tracking token
-        const trackingToken = crypto.randomUUID();
+        // Generate secure tracking token with email suffix
+        const trackingToken = `BT-${crypto.randomBytes(8).toString('hex')}-${encodeEmail(buyerEmail || deliveryDetails.email || '')}`;
 
         // Create order
         const orderResult = await db.query(
@@ -1112,9 +1132,37 @@ const getOrderByTrackingToken = async (req, res) => {
 
     order.items = itemsResult.rows;
 
+    // Decode email from tracking token or use order's buyer_email to fetch order history
+    let buyerEmail = order.buyer_email;
+    if (trackingToken.includes('-')) {
+      const parts = trackingToken.split('-');
+      const hexEmail = parts[parts.length - 1];
+      const decoded = decodeEmail(hexEmail);
+      if (decoded && decoded.includes('@')) {
+        buyerEmail = decoded;
+      }
+    }
+
+    let orderHistory = [];
+    if (buyerEmail) {
+      const historyResult = await db.query(
+        `SELECT
+          o.id, o.order_number, o.total_amount, o.status, o.created_at, o.tracking_token, s.shop_name
+         FROM orders o
+         JOIN sellers s ON o.seller_id = s.id
+         WHERE o.buyer_email = $1
+         ORDER BY o.created_at DESC`,
+        [buyerEmail.toLowerCase().trim()]
+      );
+      orderHistory = historyResult.rows;
+    }
+
     res.json({
       success: true,
-      data: order,
+      data: {
+        order,
+        history: orderHistory,
+      },
     });
   } catch (error) {
     console.error('Get order by tracking token error:', error);

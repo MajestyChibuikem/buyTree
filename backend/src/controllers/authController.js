@@ -68,12 +68,12 @@ const signup = async (req, res) => {
       }
     }
 
-    // Insert user with shop tracking
+    // Insert user with shop tracking and default to seller role
     const result = await db.query(
-      `INSERT INTO users (email, password_hash, first_name, last_name, phone, registered_via_shop_id)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO users (email, password_hash, first_name, last_name, phone, registered_via_shop_id, role)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING id, email, first_name, last_name, phone, role, created_at`,
-      [email.toLowerCase(), passwordHash, firstName, lastName, phone, registeredViaShopId]
+      [email.toLowerCase(), passwordHash, firstName, lastName, phone, registeredViaShopId, 'seller']
     );
 
     const user = result.rows[0];
