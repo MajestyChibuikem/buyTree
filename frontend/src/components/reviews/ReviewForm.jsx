@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { reviewService } from '../../services/api';
 
-export default function ReviewForm({ productId, orderId, productName, onReviewSubmitted, onCancel }) {
+export default function ReviewForm({ productId, orderId, productName, trackingToken, onReviewSubmitted, onCancel }) {
   const [formData, setFormData] = useState({
     rating: 0,
     title: '',
     comment: '',
+    displayName: '',
   });
   const [hoveredRating, setHoveredRating] = useState(0);
   const [submitting, setSubmitting] = useState(false);
@@ -28,10 +29,12 @@ export default function ReviewForm({ productId, orderId, productName, onReviewSu
         rating: formData.rating,
         title: formData.title,
         comment: formData.comment,
+        trackingToken,
+        displayName: formData.displayName,
       });
 
       // Reset form
-      setFormData({ rating: 0, title: '', comment: '' });
+      setFormData({ rating: 0, title: '', comment: '', displayName: '' });
 
       // Notify parent component
       if (onReviewSubmitted) {
@@ -73,30 +76,46 @@ export default function ReviewForm({ productId, orderId, productName, onReviewSu
   };
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">
+    <div className="bg-white p-6 border border-zinc-200 font-cinematic text-zinc-900">
+      <h3 className="text-sm font-black uppercase tracking-widest text-zinc-900 mb-6">
         Write a Review for {productName}
       </h3>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Rating */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Rating <span className="text-red-500">*</span>
+          <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-3">
+            Rating *
           </label>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-2">
             {renderInteractiveStars()}
             {formData.rating > 0 && (
-              <span className="ml-2 text-sm text-gray-600">
-                {formData.rating} out of 5 stars
+              <span className="ml-2 text-xs font-bold text-zinc-500 uppercase tracking-widest">
+                {formData.rating} Stars
               </span>
             )}
           </div>
         </div>
 
+        {/* Display Name */}
+        <div>
+          <label htmlFor="displayName" className="block text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2">
+            Your Name (Optional)
+          </label>
+          <input
+            type="text"
+            id="displayName"
+            value={formData.displayName}
+            onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
+            placeholder="e.g. Jane Doe"
+            maxLength={100}
+            className="w-full bg-zinc-50 border-b-2 border-zinc-200 hover:border-zinc-900 focus:border-zinc-900 focus:outline-none py-2 px-3 transition-colors text-sm font-medium"
+          />
+        </div>
+
         {/* Title */}
         <div>
-          <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="title" className="block text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2">
             Review Title (Optional)
           </label>
           <input
@@ -106,39 +125,39 @@ export default function ReviewForm({ productId, orderId, productName, onReviewSu
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
             placeholder="Sum up your experience in a few words"
             maxLength={200}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="w-full bg-zinc-50 border-b-2 border-zinc-200 hover:border-zinc-900 focus:border-zinc-900 focus:outline-none py-2 px-3 transition-colors text-sm font-medium"
           />
-          <p className="mt-1 text-xs text-gray-500">{formData.title.length}/200</p>
+          <p className="mt-1 text-[10px] text-zinc-400 font-bold uppercase tracking-widest text-right">{formData.title.length}/200</p>
         </div>
 
         {/* Comment */}
         <div>
-          <label htmlFor="comment" className="block text-sm font-medium text-gray-700 mb-2">
-            Review (Optional)
+          <label htmlFor="comment" className="block text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2">
+            Comments (Optional)
           </label>
           <textarea
             id="comment"
             value={formData.comment}
             onChange={(e) => setFormData({ ...formData, comment: e.target.value })}
             placeholder="Share your experience with this product..."
-            rows={5}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
+            rows={4}
+            className="w-full bg-zinc-50 border border-zinc-200 hover:border-zinc-400 focus:border-zinc-900 focus:bg-white focus:outline-none p-3 transition-all text-sm font-medium resize-none"
           />
         </div>
 
         {/* Error Message */}
         {error && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-sm text-red-600">{error}</p>
+          <div className="p-3 bg-red-50 border border-red-200 text-xs font-bold text-red-600 uppercase tracking-widest">
+            {error}
           </div>
         )}
 
         {/* Action Buttons */}
-        <div className="flex gap-3">
+        <div className="flex gap-3 pt-4 border-t border-zinc-100">
           <button
             type="submit"
             disabled={submitting}
-            className="flex-1 bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed font-medium"
+            className="flex-1 bg-zinc-900 text-white py-3 hover:bg-zinc-800 disabled:bg-zinc-300 disabled:cursor-not-allowed text-xs font-black uppercase tracking-widest transition-colors"
           >
             {submitting ? 'Submitting...' : 'Submit Review'}
           </button>
@@ -146,7 +165,7 @@ export default function ReviewForm({ productId, orderId, productName, onReviewSu
             <button
               type="button"
               onClick={onCancel}
-              className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+              className="px-6 py-3 border-2 border-zinc-200 text-zinc-500 hover:text-zinc-900 hover:border-zinc-900 transition-colors text-xs font-black uppercase tracking-widest"
             >
               Cancel
             </button>

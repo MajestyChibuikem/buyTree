@@ -81,7 +81,7 @@ export default function ReviewList({ productId }) {
   if (loading && reviews.length === 0) {
     return (
       <div className="text-center py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-zinc-900 mx-auto"></div>
         <p className="mt-2 text-gray-600">Loading reviews...</p>
       </div>
     );
@@ -116,7 +116,7 @@ export default function ReviewList({ productId }) {
                   key={rating}
                   onClick={() => handleRatingFilter(rating.toString())}
                   className={`flex items-center gap-2 w-full hover:bg-gray-50 p-2 rounded ${
-                    filters.rating === rating.toString() ? 'bg-green-50' : ''
+                    filters.rating === rating.toString() ? 'bg-zinc-100' : ''
                   }`}
                 >
                   <span className="text-sm font-medium text-gray-700 w-12">{rating} star</span>
@@ -138,7 +138,7 @@ export default function ReviewList({ productId }) {
           <select
             value={filters.sort}
             onChange={(e) => handleSortChange(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="px-4 py-2 border border-zinc-300 focus:outline-none focus:border-zinc-900 text-sm font-medium"
           >
             <option value="recent">Most Recent</option>
             <option value="helpful">Most Helpful</option>
@@ -149,10 +149,10 @@ export default function ReviewList({ productId }) {
           {filters.rating && (
             <button
               onClick={() => handleRatingFilter(filters.rating)}
-              className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm flex items-center gap-1"
+              className="px-3 py-1 bg-zinc-900 text-white text-xs font-bold uppercase tracking-widest flex items-center gap-1.5 transition-colors"
             >
               {filters.rating} stars
-              <span className="font-bold">×</span>
+              <span className="font-black text-xs">×</span>
             </button>
           )}
         </div>
@@ -172,10 +172,10 @@ export default function ReviewList({ productId }) {
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <span className="font-medium text-gray-900">
-                      {review.first_name} {review.last_name}
+                      {review.reviewer_name || 'Guest'}
                     </span>
                     {review.is_verified_purchase && (
-                      <span className="px-2 py-0.5 bg-green-100 text-green-800 text-xs rounded">
+                      <span className="px-2 py-0.5 bg-zinc-100 border border-zinc-200 text-zinc-600 text-[9px] font-black uppercase tracking-wider">
                         Verified Purchase
                       </span>
                     )}

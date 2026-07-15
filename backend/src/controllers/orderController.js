@@ -499,9 +499,15 @@ const getOrderDetails = async (req, res) => {
 
     const order = orderResult.rows[0];
 
-    // Get order items
+    // Get order items with review check
     const itemsResult = await db.query(
-      `SELECT * FROM order_items WHERE order_id = $1`,
+      `SELECT
+        oi.*, p.image_urls,
+        CASE WHEN r.id IS NOT NULL THEN true ELSE false END as has_review
+      FROM order_items oi
+      JOIN products p ON oi.product_id = p.id
+      LEFT JOIN reviews r ON oi.order_id = r.order_id AND oi.product_id = r.product_id
+      WHERE oi.order_id = $1`,
       [orderId]
     );
 
@@ -1119,13 +1125,15 @@ const getOrderByTrackingToken = async (req, res) => {
 
     const order = orderResult.rows[0];
 
-    // Fetch order items
+    // Fetch order items with review check
     const itemsResult = await db.query(
       `SELECT
         oi.id, oi.product_id, oi.product_name, oi.product_price,
-        oi.quantity, oi.subtotal, p.image_urls
+        oi.quantity, oi.subtotal, p.image_urls,
+        CASE WHEN r.id IS NOT NULL THEN true ELSE false END as has_review
       FROM order_items oi
       JOIN products p ON oi.product_id = p.id
+      LEFT JOIN reviews r ON oi.order_id = r.order_id AND oi.product_id = r.product_id
       WHERE oi.order_id = $1`,
       [order.id]
     );

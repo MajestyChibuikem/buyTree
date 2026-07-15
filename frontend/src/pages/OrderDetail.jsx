@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { orderService } from '../services/api';
 import { motion as Motion } from 'framer-motion';
+import ReviewForm from '../components/reviews/ReviewForm';
 
 export default function OrderDetail() {
   const { orderId, trackingToken } = useParams();
@@ -15,6 +16,8 @@ export default function OrderDetail() {
   const [confirming, setConfirming] = useState(false);
   const [rating, setRating] = useState(5);
   const [feedback, setFeedback] = useState('');
+  const [orderHistory, setOrderHistory] = useState([]);
+  const [activeReviewItemId, setActiveReviewItemId] = useState(null);
 
   useEffect(() => {
     fetchOrderDetails();
@@ -27,7 +30,14 @@ export default function OrderDetail() {
       const response = trackingToken
         ? await orderService.getOrderByTrackingToken(trackingToken)
         : await orderService.getOrderDetails(orderId);
-      setOrder(response.data);
+      
+      if (trackingToken) {
+        setOrder(response.data.order);
+        setOrderHistory(response.data.history || []);
+      } else {
+        setOrder(response.data);
+        setOrderHistory([]);
+      }
     } catch (error) {
       console.error('Failed to fetch order:', error);
       setError(error.response?.data?.message || 'Failed to load order details');
@@ -144,7 +154,7 @@ export default function OrderDetail() {
           <div className="flex justify-between items-center h-12">
             <div className="flex items-center gap-6">
               <button
-                onClick={() => navigate(user ? '/orders' : '/')}
+                onClick={() => navigate('/orders')}
                 className="hover:text-cinematic-dark transition-colors flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-zinc-500"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -224,19 +234,59 @@ export default function OrderDetail() {
               <h2 className="text-4xl font-black tracking-tighter text-zinc-900 mb-8 uppercase">Purchased Pieces</h2>
               
               <div className="border-t-2 border-zinc-900">
-                {order.items && order.items.map((item) => (
-                  <div key={item.id} className="py-6 border-b border-zinc-200 flex items-start justify-between gap-6 group">
-                    <div className="flex-1">
-                      <h3 className="text-lg font-bold text-zinc-900 hover:text-cinematic-dark transition-colors mb-2">{item.product_name}</h3>
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-2">QTY: {item.quantity}</p>
-                      <p className="text-sm font-medium text-zinc-600">Unit Price: {formatPrice(item.product_price)}</p>
+                {order.items && order.items.map((item) => {
+                  const isReviewOpen = activeReviewItemId === item.product_id;
+
+                  return (
+                    <div key={item.id} className="py-6 border-b border-zinc-200 flex flex-col gap-4">
+                      <div className="flex items-start justify-between gap-6">
+                        <div className="flex-1">
+                          <h3 className="text-lg font-bold text-zinc-900 mb-2">{item.product_name}</h3>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-2">QTY: {item.quantity}</p>
+                          <p className="text-sm font-medium text-zinc-600">Unit Price: {formatPrice(item.product_price)}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-1">Subtotal</p>
+                          <p className="text-xl font-black text-zinc-900">{formatPrice(item.subtotal)}</p>
+                        </div>
+                      </div>
+
+                      {/* Guest Reviews Integration */}
+                      {order.payment_status === 'paid' && (
+                        <div className="pt-2">
+                          {item.has_review ? (
+                            <span className="inline-block text-[9px] font-black uppercase tracking-widest text-zinc-400 bg-zinc-100 px-3 py-1.5 border border-zinc-200">
+                              ✓ Reviewed
+                            </span>
+                          ) : (
+                            !isReviewOpen ? (
+                              <button
+                                onClick={() => setActiveReviewItemId(item.product_id)}
+                                className="px-6 py-2 border-2 border-zinc-900 text-zinc-900 font-black uppercase tracking-widest text-[9px] hover:bg-zinc-900 hover:text-white transition-colors"
+                              >
+                                Write a Review
+                              </button>
+                            ) : (
+                              <div className="mt-4 border border-zinc-200 p-6 bg-zinc-50">
+                                <ReviewForm
+                                  productId={item.product_id}
+                                  orderId={order.id}
+                                  productName={item.product_name}
+                                  trackingToken={trackingToken}
+                                  onReviewSubmitted={() => {
+                                    setActiveReviewItemId(null);
+                                    fetchOrderDetails();
+                                  }}
+                                  onCancel={() => setActiveReviewItemId(null)}
+                                />
+                              </div>
+                            )
+                          )}
+                        </div>
+                      )}
                     </div>
-                    <div className="text-right">
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-1">Subtotal</p>
-                      <p className="text-xl font-black text-zinc-900">{formatPrice(item.subtotal)}</p>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
@@ -331,6 +381,43 @@ export default function OrderDetail() {
                 </button>
               </div>
             </div>
+
+            {/* Recent Orders History block */}
+            {orderHistory.length > 1 && (
+              <div className="bg-zinc-50 p-8 border border-zinc-100">
+                <h2 className="text-sm font-black uppercase tracking-widest text-zinc-950 mb-6 border-b border-zinc-200 pb-4">
+                  Associated Orders
+                </h2>
+                <div className="space-y-4">
+                  {orderHistory.map((histOrder) => (
+                    <button
+                      key={histOrder.id}
+                      onClick={() => navigate(`/orders/track/${histOrder.tracking_token}`)}
+                      className={`w-full text-left p-4 border transition-colors flex flex-col gap-2 ${
+                        histOrder.id === order.id
+                          ? 'border-zinc-900 bg-white'
+                          : 'border-zinc-200 bg-zinc-50 hover:bg-white hover:border-zinc-400'
+                      }`}
+                    >
+                      <div className="flex justify-between items-center">
+                        <span className="font-mono font-bold text-xs text-zinc-900">
+                          {histOrder.order_number}
+                        </span>
+                        <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500">
+                          {histOrder.status}
+                        </span>
+                      </div>
+                      <div className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">
+                        {histOrder.shop_name}
+                      </div>
+                      <div className="text-[10px] text-zinc-400">
+                        {new Date(histOrder.created_at).toLocaleDateString()} • {formatPrice(histOrder.total_amount)}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
           </div>
         </div>
